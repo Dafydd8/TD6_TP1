@@ -18,7 +18,76 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Pregunta 1
 Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantidad de observaciones del conjunto de datos se encuentra en el rango que nos indicaron, tiene un numero razonable de features teniendo en cuenta que, según lo visto en la teórica, si hay una cantidad excesiva puede dar overfitting y nos parecio adecuado, modificando algunas variables a binario,  poder realizar el trabajo con esto.
 
-```{r}
+
+
+##Pregunta 2
+```{r ej2, echo=FALSE}
+
+datos <- read.csv("/Users/Jahde/Desktop/FACULTAD/TDVI/TP1/loan_data.csv", header=TRUE)
+datos
 
 ```
+Estadísticas descriptivas de las variables principales:
+- person_age: 
+```{r ej2, echo=FALSE}
+datos_person_age<- datos$person_age
+media_person_age <- mean(datos_person_age)
+var_person_age <- var(datos_person_age)
+sd_person_age <- sd(datos_person_age)
+
+media_person_age
+var_person_age
+sd_person_age
+```
+- person_income:
+```{r ej2, echo=FALSE}
+datos_person_income<- datos$person_income
+media_person_income <- mean(datos_person_income)
+var_person_income <- var(datos_person_income)
+sd_person_income <- sd(datos_person_income)
+
+media_person_income
+var_person_income
+sd_person_income
+```
+
+- loan_amnt:
+```{r ej2, echo=FALSE}
+datos_loan_amnt<- datos$loan_amnt
+media_loan_amnt <- mean(datos_loan_amnt)
+var_loan_amnt <- var(datos_loan_amnt)
+sd_loan_amnt <- sd(datos_loan_amnt)
+
+media_loan_amnt
+var_loan_amnt
+sd_loan_amnt
+```
+- loan_intent:
+
+- loan_status (la que se va a predecir):
+```{r ej2, echo=FALSE}
+datos_loan_status<- datos$loan_status
+media_loan_status <- mean(datos_loan_status)
+var_loan_status <- var(datos_loan_status)
+sd_loan_status <- sd(datos_loan_status)
+
+media_loan_status
+var_loan_status
+sd_loan_status
+```
+
+
+## Pregunta 3
+
+```{r}
+# install.packages("titanic") # Descomentar si no lo tienen ya instalado.
+library(titanic)
+train <- titanic_train
+test <- titanic_test
+
+
+
+
+
+
 
