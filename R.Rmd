@@ -27,6 +27,7 @@ datos <- read.csv("/Users/Jahde/Desktop/FACULTAD/TDVI/TP1/loan_data.csv", header
 datos
 
 ```
+
 Estadísticas descriptivas de las variables principales:
 - person_age: 
 ```{r ej2, echo=FALSE}
@@ -62,7 +63,31 @@ media_loan_amnt
 var_loan_amnt
 sd_loan_amnt
 ```
-- loan_intent:
+-person_home_ownership (grafico de barras)
+
+-credit_score:
+```{r ej2, echo=FALSE}
+datos_credit_score<- datos$credit_score
+media_credit_score <- mean(datos_credit_score)
+var_credit_score <- var(datos_credit_score)
+sd_credit_score <- sd(datos_credit_score)
+
+media_credit_score
+var_credit_score
+sd_credit_score
+```
+
+-previous_loan_defaults_on_file:
+```{r ej2, echo=FALSE}
+datos_previous_loan_defaults_on_file<- datos$previous_loan_defaults_on_file
+media_previous_loan_defaults_on_file <- mean(datos_previous_loan_defaults_on_file)
+var_previous_loan_defaults_on_file <- var(datos_previous_loan_defaults_on_file)
+sd_previous_loan_defaults_on_file <- sd(datos_previous_loan_defaults_on_file)
+
+media_previous_loan_defaults_on_file
+var_previous_loan_defaults_on_file
+sd_previous_loan_defaults_on_file
+```
 
 - loan_status (la que se va a predecir):
 ```{r ej2, echo=FALSE}
@@ -76,18 +101,9 @@ var_loan_status
 sd_loan_status
 ```
 
-
-## Pregunta 3
-
 ```{r}
 # install.packages("titanic") # Descomentar si no lo tienen ya instalado.
 library(titanic)
 train <- titanic_train
 test <- titanic_test
-
-
-
-
-
-
-
+```
