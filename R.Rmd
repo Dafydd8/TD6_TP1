@@ -18,17 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Pregunta 1
 Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantidad de observaciones del conjunto de datos se encuentra en el rango que nos indicaron, tiene un numero razonable de features teniendo en cuenta que, según lo visto en la teórica, si hay una cantidad excesiva puede dar overfitting y nos parecio adecuado, modificando algunas variables a binario,  poder realizar el trabajo con esto.
 
+```{r}
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
