@@ -12,18 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-
-
-
-## Pregunta 1
 Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantidad de observaciones del conjunto de datos se encuentra en el rango que nos indicaron, tiene un numero razonable de features teniendo en cuenta que, según lo visto en la teórica, si hay una cantidad excesiva puede dar overfitting y nos parecio adecuado, modificando algunas variables a binario,  poder realizar el trabajo con esto.
 
 
 
-##Pregunta 2
+## Preparación de los datos
 ```{r ej2, echo=FALSE}
 
-datos <- read.csv("/Users/Jahde/Desktop/FACULTAD/TDVI/TP1/loan_data.csv", header=TRUE)
+datos <- read.csv('/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -51,7 +47,6 @@ media_person_income
 var_person_income
 sd_person_income
 ```
-
 - loan_amnt:
 ```{r ej2, echo=FALSE}
 datos_loan_amnt<- datos$loan_amnt
@@ -101,9 +96,24 @@ var_loan_status
 sd_loan_status
 ```
 
+## Boxplots 
+```{r ej2, echo=FALSE}
+boxplot(list(person_income = datos_person_income, loan_amnt = datos_loan_amnt, credit_score = datos_credit_score, loan_status = datos_loan_status),
+        col = c("red", "blue", "green","yellow", "purple"),
+        main = "Boxplots de variables numéricas",
+        xlab = "Variables",
+        ylab = "Valores",
+        ylim = c(0, 900000))
+```
+
+
+
+
+
+
 ```{r}
 # install.packages("titanic") # Descomentar si no lo tienen ya instalado.
-library(titanic)
-train <- titanic_train
-test <- titanic_test
+#library(titanic)
+#train <- titanic_train
+#test <- titanic_test
 ```
