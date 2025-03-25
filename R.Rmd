@@ -58,7 +58,18 @@ media_loan_amnt
 var_loan_amnt
 sd_loan_amnt
 ```
--person_home_ownership (grafico de barras)
+-person_home_ownership:
+```{r ej2, echo=FALSE}
+library(ggplot2)
+# Convertir a dataframe
+datos_person_home_ownership <- data.frame(person_home_ownership = datos$person_home_ownership)
+
+# Crear gráfico
+ggplot(datos_person_home_ownership, aes(x = person_home_ownership)) + 
+  geom_bar(fill = "blue") +
+  labs(title = "Person home ownership ", x = "Cantidad", y = "Frecuencia") +
+  theme_minimal()
+```
 
 -credit_score:
 ```{r ej2, echo=FALSE}
