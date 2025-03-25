@@ -171,5 +171,36 @@ install.packages("MLmetrics")
 
 ```{r ej3, echo=FALSE}
 #Accuracy
+library(MLmetrics)
 base_accuracy <- Accuracy(base_predictions_class, test$loan_status)
+```
+
+```{r ej3, echo=FALSE}
+#Matriz de confusión
+base_conf_matrix <- ConfusionMatrix(base_predictions_class, test$loan_status)
+base_conf_matrix
+```
+
+```{r ej3, echo=FALSE}
+#AUC
+base_AUC <- AUC(base_predictions_class, test$loan_status)
+base_AUC
+```
+
+```{r ej3, echo=FALSE}
+#F1 Score
+base_f1_score <- F1_Score(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
+base_f1_score
+```
+
+```{r ej3, echo=FALSE}
+#Precision
+base_precision <- Precision(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
+base_precision
+```
+
+```{r ej3, echo=FALSE}
+#Recall
+base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
+base_recall
 ```
