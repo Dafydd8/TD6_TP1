@@ -116,3 +116,41 @@ boxplot(list(person_income = datos_person_income, loan_amnt = datos_loan_amnt, c
         ylab = "Valores",
         ylim = c(0, 900000))
 ```
+
+Luego de evaluar las estadísticas descriptivas y los boxplots de los parámetros que consideramos más relevantes, procedemos a realizar el preprocesamiento de datos.
+
+```{r ej2, echo=FALSE}
+```
+
+### 3
+```{r ej3, echo=FALSE}
+n <- nrow(datos)
+
+# Índices aleatorios para cada subconjunto
+train_idx <- sample(1:n, size = 0.7 * n)  # 70% para entrenamiento
+temp_idx <- setdiff(1:n, train_idx)  # Restantes 30%
+
+valid_idx <- sample(temp_idx, size = 0.5 * length(temp_idx))  # 15% validación
+test_idx <- setdiff(temp_idx, valid_idx)  # 15% testeo
+
+# Crear los conjuntos de datos
+train <- datos[train_idx, ]
+valid <- datos[valid_idx, ]
+test <- datos[test_idx, ]
+```
+
+```{r ej3, echo=FALSE}
+library(rpart)
+library(rpart.plot)
+```
+
+```{r ej3, echo=FALSE}
+base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
+              data = train, 
+              method = "class")
+```
+
+```{r ej3, echo=FALSE}
+base_tree$control
+rpart.plot(base_tree)
+```
