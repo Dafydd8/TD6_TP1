@@ -19,7 +19,7 @@ Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantida
 ## Preparación de los datos
 ```{r ej2, echo=FALSE}
 
-datos <- read.csv('/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -104,16 +104,4 @@ boxplot(list(person_income = datos_person_income, loan_amnt = datos_loan_amnt, c
         xlab = "Variables",
         ylab = "Valores",
         ylim = c(0, 900000))
-```
-
-
-
-
-
-
-```{r}
-# install.packages("titanic") # Descomentar si no lo tienen ya instalado.
-#library(titanic)
-#train <- titanic_train
-#test <- titanic_test
 ```
