@@ -120,6 +120,11 @@ boxplot(list(person_income = datos_person_income, loan_amnt = datos_loan_amnt, c
 Luego de evaluar las estadísticas descriptivas y los boxplots de los parámetros que consideramos más relevantes, procedemos a realizar el preprocesamiento de datos.
 
 ```{r ej2, echo=FALSE}
+datos$person_gender <- as.factor(datos$person_gender)
+datos$person_education <- as.factor(datos$person_education)
+datos$person_home_ownership <- as.factor(datos$person_home_ownership)
+datos$loan_intent <- as.factor(datos$loan_intent)
+datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_on_file)
 ```
 
 ### 3
@@ -153,4 +158,18 @@ base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_e
 ```{r ej3, echo=FALSE}
 base_tree$control
 rpart.plot(base_tree)
+```
+
+```{r ej3, echo=FALSE}
+base_predictions_class  <- predict(base_tree, newdata = test, type = "class")
+base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob")
+```
+
+```{r ej3, echo=FALSE}
+install.packages("MLmetrics")
+```
+
+```{r ej3, echo=FALSE}
+#Accuracy
+base_accuracy <- Accuracy(base_predictions_class, test$loan_status)
 ```
