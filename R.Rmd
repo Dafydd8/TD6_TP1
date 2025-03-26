@@ -160,47 +160,88 @@ base_tree$control
 rpart.plot(base_tree)
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 base_predictions_class  <- predict(base_tree, newdata = test, type = "class")
 base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob")
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 install.packages("MLmetrics")
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #Accuracy
 library(MLmetrics)
 base_accuracy <- Accuracy(base_predictions_class, test$loan_status)
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #Matriz de confusión
 base_conf_matrix <- ConfusionMatrix(base_predictions_class, test$loan_status)
 base_conf_matrix
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #AUC
 base_AUC <- AUC(base_predictions_class, test$loan_status)
 base_AUC
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #F1 Score
 base_f1_score <- F1_Score(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_f1_score
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #Precision
 base_precision <- Precision(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_precision
 ```
 
-```{r ej3, echo=FALSE}
+```{r ej4, echo=FALSE}
 #Recall
 base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_recall
+```
+
+```{r ej5, echo=FALSE}
+AUCS <- c()
+paso <- 1
+for (i in 1:20){
+  matriz <- c()
+  for (j in 1:20){
+    vector <- c()
+    for (k in 1:8){
+      tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
+              data = train, 
+              method = "class",
+              maxdepth = i,
+              minsplit = j,
+              minbucket = k,
+              cp = 0,
+              xval = 0)
+      prediccion <- predict(tree, newdata = valid, type = "class")
+      auc <- AUC(prediccion, valid$loan_status)
+      vector <- append(vector, auc)
+      print(paso)
+      paso <- paso+1
+    }
+    matriz <- append(matriz, vector)
+  }
+  AUCS <- append(AUCS, matriz)
+}
+```
+
+```{r ej5, echo=FALSE}
+max(AUCS)
+```
+
+```{r ej5, echo=FALSE}
+#install.packages("plotly")
+library("plotly")
+```
+
+```{r ej5, echo=FALSE}
+
 ```
