@@ -207,9 +207,12 @@ base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # 
 base_recall
 ```
 
-```{r ej5, echo=FALSE}
+## 5. Optimización del modelo
 
-gridSearch <- function(df_train, df_prueba, maxdepth_hasta, minsplit_hasta, minbucket_hasta) {
+Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
+
+```{r ej5, echo=FALSE}
+gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbucket_hasta) {
     maxd = 1
     mins = 1
     minb = 1
@@ -225,8 +228,9 @@ gridSearch <- function(df_train, df_prueba, maxdepth_hasta, minsplit_hasta, minb
                 minbucket = k,
                 cp = 0,
                 xval = 0)
-          prediccion <- predict(tree, newdata = df_prueba, type = "class")
-          auc <- AUC(prediccion, df_prueba$loan_status)
+          prediccion <- predict(tree, newdata = df_valid, type = "class")
+          auc <- AUC(prediccion, df_valid$loan_status)
+          # Si el árbol actual tiene el AUC más alto hasta ahora, guardo los valores de los hiperparámetros
           if (auc > mejor_auc){
             maxd <- i
             mins <- j
@@ -249,32 +253,13 @@ mej_minb = mejor_arbol[3]
 ```
 
 ```{r ej5, echo=FALSE}
-#install.packages("plotly")
-library("plotly")
-```
-
-```{r ej5, echo=FALSE}
-#GRAFICOS
-```
-
-```{r ej5, echo=FALSE}
-# Encontrar la posición del valor máximo
-max_pos <- which(AUCS == max(AUCS), arr.ind = TRUE)
-
-# Imprimir el resultado
-print(max_pos)
-AUCS[2716]
-3115/160
-19*160
-```
-```{r ej5, echo=FALSE}
 # Entrenamos el arbol con mejor AUC
 tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
               data = train, 
               method = "class",
-              maxdepth = 20,
-              minsplit = 10,
-              minbucket = 3,
+              maxdepth = mej_maxd,
+              minsplit = mej_mins,
+              minbucket = mej_minb,
               cp = 0,
               xval = 0)
 
@@ -294,10 +279,15 @@ library("plotly")
 #GRAFICOS
 ```
 
+## 6. Interpretación de resultados (10 puntos)
+
+
+## 7. Análisis del impacto de los valores faltantes
+
 ```{r ej7, echo=FALSE}
-datos_20 <- datos
-datos_50 <- datos
-datos_75 <- datos
+datos_20 <- datos # 20% missings
+datos_50 <- datos # 50% missings
+datos_75 <- datos # 75% missings
 
 for (col in colnames(datos_20)) {
   cant_missings <- round(nrow(datos_20) * 0.2)
@@ -323,45 +313,45 @@ for (col in colnames(datos_75)) {
 
 ```
 
+Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno
 ```{r ej7, echo=FALSE}
+# Set 20% missings
+train_20 <- datos_20[train_idx, ]
+valid_20 <- datos_20[valid_idx, ]
+test_20 <- datos_20[test_idx, ]
 
-AUCS_datos_20 <- c()
-#paso <- 1
-for (i in 1:20){
-  matriz <- c()
-  for (j in 1:20){
-    vector <- c()
-    for (k in 1:8){
-      tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
-              data = train, 
-              method = "class",
-              maxdepth = i,
-              minsplit = j,
-              minbucket = k,
-              cp = 0,
-              xval = 0)
-      prediccion <- predict(tree, newdata = valid, type = "class")
-      auc <- AUC(prediccion, valid$loan_status)
-      vector <- append(vector, auc)
-      #print(paso)
-      #paso <- paso+1
-    }
-    matriz <- append(matriz, vector)
-  }
-  AUCS_datos_20 <- append(AUCS_datos_20, matriz)
-}
+mejor_arbol_20 <- gridSearch(train_20,valid_20,20,20,8)
+mej_auc_20 = mejor_arbol_20[0]
+mej_maxd_20 = mejor_arbol_20[1]
+mej_mins_20 = mejor_arbol_20[2]
+mej_minb_20 = mejor_arbol_20[3]
+```
 
+```{r ej7, echo=FALSE}
+# Set 50% missings
+train_50 <- datos_50[train_idx, ]
+valid_50 <- datos_50[valid_idx, ]
+test_50 <- datos_50[test_idx, ]
 
+mejor_arbol_50 <- gridSearch(train_50,valid_50,20,20,8)
+mej_auc_50 = mejor_arbol_50[0]
+mej_maxd_50 = mejor_arbol_50[1]
+mej_mins_50 = mejor_arbol_50[2]
+mej_minb_50 = mejor_arbol_50[3]
+```
 
+```{r ej7, echo=FALSE}
+# Set 75% missings
+train_75 <- datos_75[train_idx, ]
+valid_75 <- datos_75[valid_idx, ]
+test_75 <- datos_75[test_idx, ]
 
-
-
-
-
-
-
-
-
+mejor_arbol_75 <- gridSearch(train_75,valid_75,20,20,8)
+mej_auc_75 = mejor_arbol_75[0]
+mej_maxd_75 = mejor_arbol_75[1]
+mej_mins_75 = mejor_arbol_75[2]
+mej_minb_75 = mejor_arbol_75[3]
+```
 
 
 
