@@ -19,8 +19,8 @@ Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantida
 ## Preparación de los datos
 ```{r ej2, echo=FALSE}
 
-#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -29,35 +29,27 @@ Estadísticas descriptivas de las variables principales:
 - person_age: 
 ```{r ej2, echo=FALSE}
 datos_person_age<- datos$person_age
-media_person_age <- mean(datos_person_age)
-var_person_age <- var(datos_person_age)
-sd_person_age <- sd(datos_person_age)
-
-media_person_age
-var_person_age
-sd_person_age
+mean(datos_person_age)
+var(datos_person_age)
+sd(datos_person_age)
+boxplot(datos_person_age)
 ```
 - person_income:
 ```{r ej2, echo=FALSE}
 datos_person_income<- datos$person_income
-media_person_income <- mean(datos_person_income)
-var_person_income <- var(datos_person_income)
-sd_person_income <- sd(datos_person_income)
+mean(datos_person_income)
+var(datos_person_income)
+sd(datos_person_income)
+boxplot(datos_person_income)
 
-media_person_income
-var_person_income
-sd_person_income
 ```
 - loan_amnt:
 ```{r ej2, echo=FALSE}
 datos_loan_amnt<- datos$loan_amnt
-media_loan_amnt <- mean(datos_loan_amnt)
-var_loan_amnt <- var(datos_loan_amnt)
-sd_loan_amnt <- sd(datos_loan_amnt)
-
-media_loan_amnt
-var_loan_amnt
-sd_loan_amnt
+mean(datos_loan_amnt)
+var(datos_loan_amnt)
+sd(datos_loan_amnt)
+boxplot(datos_loan_amnt)
 ```
 -person_home_ownership:
 ```{r ej2, echo=FALSE}
@@ -75,25 +67,37 @@ ggplot(datos_person_home_ownership, aes(x = person_home_ownership)) +
 -credit_score:
 ```{r ej2, echo=FALSE}
 datos_credit_score<- datos$credit_score
-media_credit_score <- mean(datos_credit_score)
-var_credit_score <- var(datos_credit_score)
-sd_credit_score <- sd(datos_credit_score)
-
-media_credit_score
-var_credit_score
-sd_credit_score
+mean(datos_credit_score)
+var(datos_credit_score)
+sd(datos_credit_score)
+boxplot(datos_credit_score)
 ```
 
 -previous_loan_defaults_on_file:
 ```{r ej2, echo=FALSE}
 datos_previous_loan_defaults_on_file<- datos$previous_loan_defaults_on_file
-media_previous_loan_defaults_on_file <- mean(datos_previous_loan_defaults_on_file)
-var_previous_loan_defaults_on_file <- var(datos_previous_loan_defaults_on_file)
-sd_previous_loan_defaults_on_file <- sd(datos_previous_loan_defaults_on_file)
+cant_si <- 0
+for (i in 1:nrow(datos)){
+  if (datos_previous_loan_defaults_on_file[i] == 'Yes'){
+    cant_si <- cant_si + 1
+  }
+}
 
-media_previous_loan_defaults_on_file
-var_previous_loan_defaults_on_file
-sd_previous_loan_defaults_on_file
+df <- data.frame(
+  categoria = c("has defaulted", "Never defaulted"),
+  valores = c(cant_si, nrow(datos)-cant_si)
+)
+
+df$porcentaje <- round(df$valores / sum(df$valores) * 100, 1)
+df$etiquetas <- paste0(df$porcentaje, "%")  # Formato de etiqueta
+
+ggplot(df, aes(x = "", y = valores, fill = categoria)) +
+  geom_bar(stat = "identity", width = 1) +  # Crear la torta
+  coord_polar("y") +  # Convertir a torta
+  geom_text(aes(label = etiquetas), position = position_stack(vjust = 0.5), size = 5) +  # Agregar % en el centro de cada porción
+  theme_void() +  # Quitar ejes
+  labs(title = "Proporción de Defaults")
+
 ```
 
 - loan_status (la que se va a predecir):
@@ -106,16 +110,7 @@ sd_loan_status <- sd(datos_loan_status)
 media_loan_status
 var_loan_status
 sd_loan_status
-```
 
-## Boxplots 
-```{r ej2, echo=FALSE}
-boxplot(list(person_income = datos_person_income, loan_amnt = datos_loan_amnt, credit_score = datos_credit_score, loan_status = datos_loan_status),
-        col = c("red", "blue", "green","yellow", "purple"),
-        main = "Boxplots de variables numéricas",
-        xlab = "Variables",
-        ylab = "Valores",
-        ylim = c(0, 900000))
 ```
 
 Luego de evaluar las estadísticas descriptivas y los boxplots de los parámetros que consideramos más relevantes, procedemos a realizar el preprocesamiento de datos.
@@ -212,6 +207,18 @@ base_recall
 Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
 
 ```{r ej5, echo=FALSE}
+train_tree_with_hyperparameters <- function(train_data, max_depth, min_split, min_bucket){
+  tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
+                data = train_data, 
+                method = "class",
+                maxdepth = max_depth,
+                minsplit = min_split,
+                minbucket = min_bucket,
+                cp = 0,
+                xval = 0)
+  return (tree)
+}
+
 gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbucket_hasta) {
     maxd = 1
     mins = 1
@@ -220,14 +227,7 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     for (i in 1:maxdepth_hasta){
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
-          tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
-                data = df_train, 
-                method = "class",
-                maxdepth = i,
-                minsplit = j,
-                minbucket = k,
-                cp = 0,
-                xval = 0)
+          tree <- train_tree_with_hyperparameters(df_train, i, j, k)
           prediccion <- predict(tree, newdata = df_valid, type = "class")
           auc <- AUC(prediccion, df_valid$loan_status)
           # Si el árbol actual tiene el AUC más alto hasta ahora, guardo los valores de los hiperparámetros
@@ -241,27 +241,25 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
       }
     }
   return(c(mejor_auc,maxd,mins,minb))
-  }
+}
+
 ```
 
 ```{r ej5, echo=FALSE}
 mejor_arbol <- gridSearch(train,valid,20,20,8)
-mej_auc = mejor_arbol[0]
-mej_maxd = mejor_arbol[1]
-mej_mins = mejor_arbol[2]
-mej_minb = mejor_arbol[3]
+
+```
+
+```{r ej5, echo=FALSE}
+mej_auc = mejor_arbol[1]
+mej_maxd = mejor_arbol[2]
+mej_mins = mejor_arbol[3]
+mej_minb = mejor_arbol[4]
 ```
 
 ```{r ej5, echo=FALSE}
 # Entrenamos el arbol con mejor AUC
-tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
-              data = train, 
-              method = "class",
-              maxdepth = mej_maxd,
-              minsplit = mej_mins,
-              minbucket = mej_minb,
-              cp = 0,
-              xval = 0)
+tree <- train_tree_with_hyperparameters(train, mej_maxd, mej_mins, mej_minb)
 
 # Predecimos sobre el conjunto de testeo
 prediccion <- predict(tree, newdata = test, type = "class")

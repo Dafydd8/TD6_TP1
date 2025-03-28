@@ -3,3 +3,4 @@ data <- read.csv("C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\T
 x_train <- data[1:500, 1:3]
 data
 x_train
+round(3/2)
