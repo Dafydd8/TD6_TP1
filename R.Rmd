@@ -163,7 +163,7 @@ base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob")
 ```
 
 ```{r ej4, echo=FALSE}
-install.packages("MLmetrics")
+#install.packages("MLmetrics")
 ```
 
 ```{r ej4, echo=FALSE}
@@ -228,10 +228,12 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
+          #rpart.plot(tree)
           prediccion <- predict(tree, newdata = df_valid, type = "class")
           auc <- AUC(prediccion, df_valid$loan_status)
+          print(auc)
           # Si el árbol actual tiene el AUC más alto hasta ahora, guardo los valores de los hiperparámetros
-          if (auc > mejor_auc){
+          if (!is.na(auc) && auc > mejor_auc){
             maxd <- i
             mins <- j
             minb <- k
@@ -319,10 +321,10 @@ valid_20 <- datos_20[valid_idx, ]
 test_20 <- datos_20[test_idx, ]
 
 mejor_arbol_20 <- gridSearch(train_20,valid_20,20,20,8)
-mej_auc_20 = mejor_arbol_20[0]
-mej_maxd_20 = mejor_arbol_20[1]
-mej_mins_20 = mejor_arbol_20[2]
-mej_minb_20 = mejor_arbol_20[3]
+mej_auc_20 = mejor_arbol_20[1]
+mej_maxd_20 = mejor_arbol_20[2]
+mej_mins_20 = mejor_arbol_20[3]
+mej_minb_20 = mejor_arbol_20[4]
 ```
 
 ```{r ej7, echo=FALSE}
