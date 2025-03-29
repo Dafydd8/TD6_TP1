@@ -224,6 +224,7 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mins = 1
     minb = 1
     mejor_auc = 0
+    AUCS <- c()
     for (i in 1:maxdepth_hasta){
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
@@ -239,16 +240,23 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
             minb <- k
             mejor_auc <- auc
           }
+          # Guardar el AUC en un vector para graficar
+          AUCS <- c(AUCS, auc)
         }
       }
     }
-  return(c(mejor_auc,maxd,mins,minb))
+  return(c(mejor_auc,maxd,mins,minb, AUCS))
 }
 
 ```
 
 ```{r ej5, echo=FALSE}
-mejor_arbol <- gridSearch(train,valid,20,20,8)
+resultados <- gridSearch(train,valid,5,5,5)
+mejor_auc <- resultados[1]
+mejor_maxd <- resultados[2]
+mejor_mins <- resultados[3]
+mejor_minb <- resultados[4]
+aucs_calculados <- resultados[5]
 
 ```
 
