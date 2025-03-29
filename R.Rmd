@@ -251,19 +251,76 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 ```
 
 ```{r ej5, echo=FALSE}
-resultados <- gridSearch(train,valid,5,5,5)
+resultados <- gridSearch(train,valid,20,20,8)
 mejor_auc <- resultados[1]
 mejor_maxd <- resultados[2]
 mejor_mins <- resultados[3]
 mejor_minb <- resultados[4]
 aucs_calculados <- resultados[5:length(resultados)]
+aucs_calculados
 ```
 
 ```{r ej5, echo=FALSE}
-mej_auc = mejor_arbol[1]
-mej_maxd = mejor_arbol[2]
-mej_mins = mejor_arbol[3]
-mej_minb = mejor_arbol[4]
+#maxdepth
+x_maxD <- c()
+for (i in 1:20){
+  for (j in 1:160){
+    x_maxD <- c(x_maxD, i)
+  }
+}
+x_maxD
+```
+
+```{r ej5, echo=FALSE}
+# Gráfico de dispersión
+plot(x_maxD, aucs_calculados, 
+     main = "AUc según max_depth", 
+     xlab = "max_depth", 
+     ylab = "AUC", 
+     col = "blue", 
+     pch = 19)  # pch define el tipo de punto
+```
+
+```{r ej5, echo=FALSE}
+#minsplit
+x_minS <- c()
+for (i in 1:20){
+  for (j in 1:20){
+    for (k in 1:8){
+      x_minS <- c(x_minS, j)
+    }
+  }
+}
+```
+
+```{r ej5, echo=FALSE}
+# Gráfico de dispersión
+plot(x_minS, aucs_calculados, 
+     main = "AUc según max_depth", 
+     xlab = "max_depth", 
+     ylab = "AUC", 
+     col = "blue", 
+     pch = 19)  # pch define el tipo de punto
+```
+
+```{r ej5, echo=FALSE}
+#minbucket
+x_minB <- c()
+for (i in 1:160){
+  for (j in 1:20){
+    x_minB <- c(x_minB, j)
+  }
+}
+x_minB
+```
+```{r ej5, echo=FALSE}
+# Gráfico de dispersión
+plot(x_minB, aucs_calculados, 
+     main = "AUc según max_depth", 
+     xlab = "max_depth", 
+     ylab = "AUC", 
+     col = "blue", 
+     pch = 19)  # pch define el tipo de punto
 ```
 
 ```{r ej5, echo=FALSE}
