@@ -256,8 +256,7 @@ mejor_auc <- resultados[1]
 mejor_maxd <- resultados[2]
 mejor_mins <- resultados[3]
 mejor_minb <- resultados[4]
-aucs_calculados <- resultados[5]
-
+aucs_calculados <- resultados[5:length(resultados)]
 ```
 
 ```{r ej5, echo=FALSE}
