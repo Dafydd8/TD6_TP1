@@ -19,8 +19,8 @@ Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantida
 ## Preparación de los datos
 ```{r ej2, echo=FALSE}
 
-datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -123,7 +123,8 @@ datos$loan_intent <- as.factor(datos$loan_intent)
 datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_on_file)
 ```
 
-### 3
+## 3. Construcción de un árbol de decisión básico
+
 ```{r ej3, echo=FALSE}
 set.seed(678)
 n <- nrow(datos)
@@ -156,6 +157,7 @@ base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_e
 base_tree$control
 rpart.plot(base_tree)
 ```
+## 4. Evaluación del árbol de decisión básico
 
 ```{r ej4, echo=FALSE}
 base_predictions_class  <- predict(base_tree, newdata = test, type = "class")
@@ -202,6 +204,21 @@ base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # 
 base_recall
 ```
 
+- Accuracy: Esta metrica nos dio como resultado  0.9117168, lo que significa que el modelo clasifica correctamente el 91.17% de los casos en el conjunto de prueba.
+
+- Precision: De los que dijimos que eran positivos,  72,2% son efectivamente positivos.
+
+- recall: De los que efectivamente son positivos, el 83,5% dijimos que eran positivos.
+
+- F1-score: Esta metrica nos dió como resultado 0,7745  modelo tiene un buen balance entre precisión y recall, aunque no es perfecto.
+
+- AUC-ROC: Nos dio  0.8423256, lo que significa que el modelo tiene buena  capacidad de clasificacion, esta arriba de un modelo aleatorio.
+
+- Matriz de confusión:La matriz indica que el modelo clasificó correctamente 5069 casos negativos, es decir, donde la clase real era 0 y el modelo también predijo 0. 
+Hay 210 casos en los que el modelo predijo 1 (positivo), pero en realidad la clase era 0.
+El modelo falló en 409 casos donde la clase real era 1, pero predijo 0. Hay algunos casos positivos que no fueron detectados correctamente.
+finalmente, en 1063 casos el modelo detectó correctamente la clase positiva.
+
 ## 5. Optimización del modelo
 
 Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
@@ -226,6 +243,7 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mejor_auc = 0
     AUCS <- c()
     for (i in 1:maxdepth_hasta){
+      print(i)
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
@@ -251,7 +269,7 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 ```
 
 ```{r ej5, echo=FALSE}
-resultados <- gridSearch(train,valid,20,20,8)
+#resultados <- gridSearch(train,valid,20,20,8)
 mejor_auc <- resultados[1]
 mejor_maxd <- resultados[2]
 mejor_mins <- resultados[3]
@@ -268,7 +286,6 @@ for (i in 1:20){
     x_maxD <- c(x_maxD, i)
   }
 }
-x_maxD
 ```
 
 ```{r ej5, echo=FALSE}
@@ -296,10 +313,10 @@ for (i in 1:20){
 ```{r ej5, echo=FALSE}
 # Gráfico de dispersión
 plot(x_minS, aucs_calculados, 
-     main = "AUc según max_depth", 
-     xlab = "max_depth", 
+     main = "AUc según minsplit", 
+     xlab = "minsplit", 
      ylab = "AUC", 
-     col = "blue", 
+     col = "red", 
      pch = 19)  # pch define el tipo de punto
 ```
 
@@ -311,15 +328,14 @@ for (i in 1:160){
     x_minB <- c(x_minB, j)
   }
 }
-x_minB
 ```
 ```{r ej5, echo=FALSE}
 # Gráfico de dispersión
 plot(x_minB, aucs_calculados, 
-     main = "AUc según max_depth", 
-     xlab = "max_depth", 
+     main = "AUc según minbucket", 
+     xlab = "minbucket", 
      ylab = "AUC", 
-     col = "blue", 
+     col = "green", 
      pch = 19)  # pch define el tipo de punto
 ```
 
@@ -384,11 +400,11 @@ train_20 <- datos_20[train_idx, ]
 valid_20 <- datos_20[valid_idx, ]
 test_20 <- datos_20[test_idx, ]
 
-mejor_arbol_20 <- gridSearch(train_20,valid_20,20,20,8)
-mej_auc_20 = mejor_arbol_20[1]
-mej_maxd_20 = mejor_arbol_20[2]
-mej_mins_20 = mejor_arbol_20[3]
-mej_minb_20 = mejor_arbol_20[4]
+# mejor_arbol_20 <- gridSearch(train_20,valid_20,20,20,8)
+# mej_auc_20 = mejor_arbol_20[1]
+# mej_maxd_20 = mejor_arbol_20[2]
+# mej_mins_20 = mejor_arbol_20[3]
+# mej_minb_20 = mejor_arbol_20[4]
 ```
 
 ```{r ej7, echo=FALSE}
@@ -397,11 +413,11 @@ train_50 <- datos_50[train_idx, ]
 valid_50 <- datos_50[valid_idx, ]
 test_50 <- datos_50[test_idx, ]
 
-mejor_arbol_50 <- gridSearch(train_50,valid_50,20,20,8)
-mej_auc_50 = mejor_arbol_50[0]
-mej_maxd_50 = mejor_arbol_50[1]
-mej_mins_50 = mejor_arbol_50[2]
-mej_minb_50 = mejor_arbol_50[3]
+# mejor_arbol_50 <- gridSearch(train_50,valid_50,20,20,8)
+# mej_auc_50 = mejor_arbol_50[0]
+# mej_maxd_50 = mejor_arbol_50[1]
+# mej_mins_50 = mejor_arbol_50[2]
+# mej_minb_50 = mejor_arbol_50[3]
 ```
 
 ```{r ej7, echo=FALSE}
@@ -410,11 +426,11 @@ train_75 <- datos_75[train_idx, ]
 valid_75 <- datos_75[valid_idx, ]
 test_75 <- datos_75[test_idx, ]
 
-mejor_arbol_75 <- gridSearch(train_75,valid_75,20,20,8)
-mej_auc_75 = mejor_arbol_75[0]
-mej_maxd_75 = mejor_arbol_75[1]
-mej_mins_75 = mejor_arbol_75[2]
-mej_minb_75 = mejor_arbol_75[3]
+# mejor_arbol_75 <- gridSearch(train_75,valid_75,20,20,8)
+# mej_auc_75 = mejor_arbol_75[0]
+# mej_maxd_75 = mejor_arbol_75[1]
+# mej_mins_75 = mejor_arbol_75[2]
+# mej_minb_75 = mejor_arbol_75[3]
 ```
 
 
