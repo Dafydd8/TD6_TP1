@@ -27,8 +27,8 @@ Consideramos que las variables principalmente influyentes a la hora de predecir 
 ## Preparación de los datos
 ```{r , echo=FALSE}
 
-datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -172,6 +172,16 @@ base_tree$control
 rpart.plot(base_tree)
 base_tree$variable.importance
 ```
+La clase predicha para las observaciones en los nodos celestes es 0 (no recibe el préstamo), y la clase predicha para las observaciones en los nodos verdes es 1 (recibe el préstamo). 
+
+Raíz del árbol: Toma la feature previous_loan_defaults_on file. Separa a quienes tienen deudas con el banco por préstamos anteriores sin pagar (YES, rama izquierda) y quienes NO (rama derecha). Podemos observar que todas las personas que han defaulteado un préstamo caen directamente en la categoría NO (50% de las observaciones) y que el nodo tiene una impureza de 0.0, lo cuál indica que todas las observaciones dentro de este nodo efectivamente se encuentran en la categoría predicha . Por lo tanto, esta es la variable que mejor separa las clases del conjunto de datos.
+
+El segundo corte del árbol se realiza con la feature loan_percent_income, que representa el ratio entre el importe del préstamo solicitado por una persona y su ingreso anual. La categoría predicha para el nodo que representa este corte es NO. Sin embargo, suponiendo que el threshold=0.5, este nodo tiene una alta impureza. Esto tiene sentido, ya que sabemos que la media de loan_status del conjunto de datos es 0.22 (muy poca gente recibe el préstamo), y a su vez todas las personas que si recibieron el préstamo caen en este nodo.
+
+Podemos ver que la clase predicha para el nodo que se desprende de la rama izquierda (loan_percent_income < 0.26) es NO, mientras que la clase predicha para el nodo derecho es YES. Esto nos da la intuición de que la mayoría de las personas con un loan_percent_income menor a 0.26 no recibirán el préstamo, mientras que aquellos con un loan_percent_income mayor o igual a 0.26 tendrán más chances de que su solicitud sea aceptada.
+
+En total, el árbol tiene 6 niveles.
+
 ## 4. Evaluación del árbol de decisión básico
 
 ```{r , echo=FALSE}
