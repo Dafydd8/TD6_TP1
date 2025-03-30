@@ -20,15 +20,15 @@ Consideramos que las variables principalmente influyentes a la hora de predecir 
 - Person age: mayor edad puede asociarse a mayor solvencia económica o estabilidad financiera.
 - Person income: resulta natural que a mayor ingresos, más probabilidades hay de obtener un préstamo.
 - Loan amount: este parámetro en relación al Person Income, debería ayudar a definir la obtención o no del préstamo.
-- Person Home Ownership: este dato suele ser muy considerado en Estados Unidos (lugar de orgien del autor del dataset)
+- Person Home Ownership: este dato suele ser muy considerado en Estados Unidos (lugar de origen del autor del dataset)
 - Credit Score: esta es otra medida que indica la solvencia financiera de una persona. Se usa para evaluar el riesgo de otorgar un préstamo o crédito, indicando la probabilidad de que el solicitante pague a tiempo sus deudas.
 - Previous Loan Defaults on File: debería resultar relevante saber si el solicitante ya ha fallado en pagar deudas de préstamos en el pasado.
 
 ## Preparación de los datos
 ```{r , echo=FALSE}
 
-datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -41,7 +41,7 @@ datos_person_age<- datos$person_age
 mean(datos_person_age)
 var(datos_person_age)
 sd(datos_person_age)
-boxplot(datos_person_age)
+boxplot(datos_person_age, main="person_age")
 ```
 Con el boxplot se puede ver que hay algunos outliers extraños de 140 años. Creemos que se debe a errores al cargar los datos. De todas formas, como son 5 casos de los 45000 totales, decidimos que no debería representar grandes problemas.
 
@@ -52,7 +52,7 @@ datos_person_income<- datos$person_income
 mean(datos_person_income)
 var(datos_person_income)
 sd(datos_person_income)
-boxplot(datos_person_income)
+boxplot(datos_person_income, main="person_income")
 
 ```
 - loan_amnt:
@@ -62,7 +62,7 @@ datos_loan_amnt<- datos$loan_amnt
 mean(datos_loan_amnt)
 var(datos_loan_amnt)
 sd(datos_loan_amnt)
-boxplot(datos_loan_amnt)
+boxplot(datos_loan_amnt, main="loan_amnt")
 ```
 -person_home_ownership:
 A continuación se muestra la cantidad de casos para cada categoría de esta variable:
@@ -74,7 +74,7 @@ datos_person_home_ownership <- data.frame(person_home_ownership = datos$person_h
 # Crear gráfico
 ggplot(datos_person_home_ownership, aes(x = person_home_ownership)) + 
   geom_bar(fill = "blue") +
-  labs(title = "Person home ownership ", x = "Cantidad", y = "Frecuencia") +
+  labs(title = "Person home ownership", x = "Cantidad", y = "Frecuencia") +
   theme_minimal()
 ```
 
@@ -85,7 +85,7 @@ datos_credit_score<- datos$credit_score
 mean(datos_credit_score)
 var(datos_credit_score)
 sd(datos_credit_score)
-boxplot(datos_credit_score)
+boxplot(datos_credit_score, main="credit_score")
 ```
 
 -previous_loan_defaults_on_file:
@@ -116,7 +116,7 @@ ggplot(df, aes(x = "", y = valores, fill = categoria)) +
 
 ```
 
-- loan_status (la que se va a predecir):
+- TARGET: loan_status (la variable que se quiere predecir):
 A continuación se presenta la proporción de préstamos otorgados
 ```{r , echo=FALSE}
 datos_loan_status<- datos$loan_status
@@ -172,6 +172,16 @@ base_tree$control
 rpart.plot(base_tree)
 base_tree$variable.importance
 ```
+La clase predicha para las observaciones en los nodos celestes es 0 (no recibe el préstamo), y la clase predicha para las observaciones en los nodos verdes es 1 (recibe el préstamo). 
+
+Raíz del árbol: Toma la feature previous_loan_defaults_on file. Separa a quienes tienen deudas con el banco por préstamos anteriores sin pagar (YES, rama izquierda) y quienes NO (rama derecha). Podemos observar que todas las personas que han defaulteado un préstamo caen directamente en la categoría NO (50% de las observaciones) y que el nodo tiene una impureza de 0.0, lo cuál indica que todas las observaciones dentro de este nodo efectivamente se encuentran en la categoría predicha . Por lo tanto, esta es la variable que mejor separa las clases del conjunto de datos.
+
+El segundo corte del árbol se realiza con la feature loan_percent_income, que representa el ratio entre el importe del préstamo solicitado por una persona y su ingreso anual. La categoría predicha para el nodo que representa este corte es NO. Sin embargo, suponiendo que el threshold=0.5, este nodo tiene una alta impureza. Esto tiene sentido, ya que sabemos que la media de loan_status del conjunto de datos es 0.22 (muy poca gente recibe el préstamo), y a su vez todas las personas que si recibieron el préstamo caen en este nodo.
+
+Podemos ver que la clase predicha para el nodo que se desprende de la rama izquierda (loan_percent_income < 0.26) es NO, mientras que la clase predicha para el nodo derecho es YES. Esto nos da la intuición de que la mayoría de las personas con un loan_percent_income menor a 0.26 no recibirán el préstamo, mientras que aquellos con un loan_percent_income mayor o igual a 0.26 tendrán más chances de que su solicitud sea aceptada. REVISAR
+
+En total, el árbol tiene 5 niveles.
+
 ## 4. Evaluación del árbol de decisión básico
 
 ```{r , echo=FALSE}
@@ -230,9 +240,10 @@ base_recall
 - AUC-ROC: Nos dio  0.8423256, lo que significa que el modelo tiene buena  capacidad de clasificacion, esta arriba de un modelo aleatorio.
 
 - Matriz de confusión:La matriz indica que el modelo clasificó correctamente 5069 casos negativos, es decir, donde la clase real era 0 y el modelo también predijo 0. 
-Hay 210 casos en los que el modelo predijo 1 (positivo), pero en realidad la clase era 0.
+
+Hubieron 210 casos en los que el modelo predijo 1 (positivo), pero en realidad la clase era 0.
 El modelo falló en 409 casos donde la clase real era 1, pero predijo 0. Hay algunos casos positivos que no fueron detectados correctamente.
-finalmente, en 1063 casos el modelo detectó correctamente la clase positiva.
+Finalmente, en 1063 casos el modelo detectó correctamente la clase positiva.
 
 ## 5. Optimización del modelo
 
@@ -258,14 +269,11 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mejor_auc = 0
     AUCS <- c()
     for (i in 1:maxdepth_hasta){
-      #print(i)
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
-          #rpart.plot(tree)
           prediccion <- predict(tree, newdata = df_valid, type = "class")
           auc <- AUC(prediccion, df_valid$loan_status)
-          #print(auc)
           # Si el árbol actual tiene el AUC más alto hasta ahora, guardo los valores de los hiperparámetros
           if (!is.na(auc) && auc > mejor_auc){
             maxd <- i
@@ -304,13 +312,13 @@ for (i in 1:20){
 ```
 
 ```{r , echo=FALSE}
-# Gráfico de dispersión
+# Scatter plot de la relación entre maxdepth y el AUC-ROC
 plot(x_maxD, aucs_calculados, 
      main = "AUc según max_depth", 
      xlab = "max_depth", 
      ylab = "AUC", 
      col = "blue", 
-     pch = 19)  # pch define el tipo de punto
+     pch = 19)  
 ```
 
 ```{r , echo=FALSE}
@@ -326,13 +334,13 @@ for (i in 1:20){
 ```
 
 ```{r , echo=FALSE}
-# Gráfico de dispersión
+# Scatter plot de la relación entre minsplit y el AUC-ROC
 plot(x_minS, aucs_calculados, 
      main = "AUc según minsplit", 
      xlab = "minsplit", 
      ylab = "AUC", 
      col = "red", 
-     pch = 19)  # pch define el tipo de punto
+     pch = 19)  
 ```
 
 ```{r , echo=FALSE}
@@ -344,14 +352,15 @@ for (i in 1:160){
   }
 }
 ```
+
 ```{r , echo=FALSE}
-# Gráfico de dispersión
+# Scatter plot de la relación entre minbucket y el AUC-ROC
 plot(x_minB, aucs_calculados, 
      main = "AUc según minbucket", 
      xlab = "minbucket", 
      ylab = "AUC", 
-     col = "green", 
-     pch = 19)  # pch define el tipo de punto
+     col = "orange", 
+     pch = 19)  
 ```
 
 ```{r , echo=FALSE}
@@ -366,13 +375,14 @@ auc
 Vemos que con la grid search mejoramos la performance (medida con el AUC). Con el arbol base el AUC era 0.83 y con el optimizado 0.86.
 
 ## 6. Interpretación de resultados (10 puntos)
+
 Se presenta el arbol final optimizado
 ```{r , echo=FALSE}
 best_tree$control
 rpart.plot(best_tree, roundint = FALSE)
 ```
-Como se puede ver, el arbol optimizado es mucho más profundo y con más nodos finales. Esto nos dice que probablemente haya overfitting con respecto al arbol entrenado en el ejercicio 3. Sin embargo, como vimos en el 
-ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del arbol base, por lo l amayor flexibilidad del arbol no necesariamente tendría que ser un problema.
+Observamos que el árbol optimizado es mucho más profundo y con más nodos finales, lo cuál puede significar que hay overfitting con respecto al árbol entrenado en el ejercicio 3. 
+Sin embargo, como vimos en el ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del árbol base, por lo cuál la mayor flexibilidad del árbol no necesariamente tendría que ser un problema.
 
 Para identificar los nodos superiores del arbol, lo volvemos a graficar, pero solo hasta el nivel 5.
 
@@ -388,7 +398,7 @@ rpart.plot(pruned_tree)
 best_tree$variable.importance
 ```
 
-Como podemos ver, los primeros niveles del arbol se mantuvieron iguales que en el arbol base. Las variables más importantes no cambiaron. Esto nos indica que cambiar los hiperparámetros no llevó a cambios en la jerarquía de importancia dada a cada variable. Sin emabrgo, procedemos a hacer un análisis más exhaustivo con rpart para obtener la importancia de cada parametro real.
+Como podemos ver, los primeros niveles del árbol se mantuvieron iguales que en el árbol base. Las variables más importantes no cambiaron. Esto nos indica que cambiar los hiperparámetros no llevó a cambios en la jerarquía de importancia dada a cada variable. Sin embargo, procedemos a hacer un análisis más exhaustivo con rpart para obtener la importancia de cada parámetro real.
 
 ```{r , echo=FALSE}
 print("Importancia de parámetros para el arbol base")
@@ -397,6 +407,7 @@ print("Importancia de parámetros para el mejor arbol")
 best_tree$variable.importance
 ```
 Como vemos, si hay cambios en los valores numéricos de la importancia de cada variable. Además, vemos que a partir de loan_intent comienzan a haber cambios en la jerarquía de importancia de las variables.
+
 ## 7. Análisis del impacto de los valores faltantes
 
 ```{r , echo=FALSE}
@@ -421,10 +432,6 @@ for (col in colnames(datos_75)) {
   na_positions <- sample(nrow(datos_75), cant_missings, replace = FALSE)
   datos_75[na_positions, col] <- NA  
 }
-
-#print(colSums(is.na(datos_20)))
-#print(colSums(is.na(datos_50)))
-#print(colSums(is.na(datos_75)))
 
 ```
 
