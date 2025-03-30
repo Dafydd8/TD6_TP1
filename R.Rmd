@@ -2,7 +2,9 @@
 title: "TP1 TD VI"
 author: "Dafydd Jenkins, Josefina Jahde y Serena Marelli"
 date: "2025-03-20"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,32 +12,42 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 ##Introducción al problema
 
+El presente trabajo aborda el problema de clasificación en la aprobación de préstamos utilizando el conjunto de datos Loan Approval Classification Data, disponible en Kaggle. Este dataset contiene información relevante sobre solicitudes de préstamo, incluyendo variables clave como historial crediticio, ingresos del solicitante, monto del préstamo, estado civil y nivel educativo, entre otras. El objetivo principal es predecir si una solicitud de préstamo será aprobada o rechazada en función de estos atributos.
 
+La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. Finalmente, el dataset contiene una combinación de variables categóricas y numéricas, lo que permite evaluar la capacidad de los árboles de decisión para manejar distintos tipos de datos y generar reglas claras para la clasificación.
 
-Nuestra eleccion sobre el dataset radica en que cumple con lo pedido, la cantidad de observaciones del conjunto de datos se encuentra en el rango que nos indicaron, tiene un numero razonable de features teniendo en cuenta que, según lo visto en la teórica, si hay una cantidad excesiva puede dar overfitting y nos parecio adecuado, modificando algunas variables a binario,  poder realizar el trabajo con esto.
-
-
+Consideramos que las variables principalmente influyentes a la hora de predecir serán:
+- Person age: mayor edad puede asociarse a mayor solvencia económica o estabilidad financiera.
+- Person income: resulta natural que a mayor ingresos, más probabilidades hay de obtener un préstamo.
+- Loan amount: este parámetro en relación al Person Income, debería ayudar a definir la obtención o no del préstamo.
+- Person Home Ownership: este dato suele ser muy considerado en Estados Unidos (lugar de orgien del autor del dataset)
+- Credit Score: esta es otra medida que indica la solvencia financiera de una persona. Se usa para evaluar el riesgo de otorgar un préstamo o crédito, indicando la probabilidad de que el solicitante pague a tiempo sus deudas.
+- Previous Loan Defaults on File: debería resultar relevante saber si el solicitante ya ha fallado en pagar deudas de préstamos en el pasado.
 
 ## Preparación de los datos
-```{r ej2, echo=FALSE}
+```{r , echo=FALSE}
 
-#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
 
 Estadísticas descriptivas de las variables principales:
-- person_age: 
-```{r ej2, echo=FALSE}
+- person_age:
+A continuación se presentan edad promedio de los solicitantes, varianza y desvío estándar:
+```{r, echo=FALSE}
 datos_person_age<- datos$person_age
 mean(datos_person_age)
 var(datos_person_age)
 sd(datos_person_age)
 boxplot(datos_person_age)
 ```
+Con el boxplot se puede ver que hay algunos outliers extraños de 140 años. Creemos que se debe a errores al cargar los datos. De todas formas, como son 5 casos de los 45000 totales, decidimos que no debería representar grandes problemas.
+
 - person_income:
-```{r ej2, echo=FALSE}
+A continuación se presentan ingresos promedio de los solicitantes, varianza y desvío estándar:
+```{r, echo=FALSE}
 datos_person_income<- datos$person_income
 mean(datos_person_income)
 var(datos_person_income)
@@ -44,7 +56,8 @@ boxplot(datos_person_income)
 
 ```
 - loan_amnt:
-```{r ej2, echo=FALSE}
+A continuación se presentan monto pedido promedio de los solicitantes, varianza y desvío estándar:
+```{r , echo=FALSE}
 datos_loan_amnt<- datos$loan_amnt
 mean(datos_loan_amnt)
 var(datos_loan_amnt)
@@ -52,7 +65,8 @@ sd(datos_loan_amnt)
 boxplot(datos_loan_amnt)
 ```
 -person_home_ownership:
-```{r ej2, echo=FALSE}
+A continuación se muestra la cantidad de casos para cada categoría de esta variable:
+```{r , echo=FALSE}
 library(ggplot2)
 # Convertir a dataframe
 datos_person_home_ownership <- data.frame(person_home_ownership = datos$person_home_ownership)
@@ -65,7 +79,8 @@ ggplot(datos_person_home_ownership, aes(x = person_home_ownership)) +
 ```
 
 -credit_score:
-```{r ej2, echo=FALSE}
+A continuación se presenta el puntaje crediticio promedio de los solicitantes, varianza y desvío estándar:
+```{r , echo=FALSE}
 datos_credit_score<- datos$credit_score
 mean(datos_credit_score)
 var(datos_credit_score)
@@ -74,7 +89,8 @@ boxplot(datos_credit_score)
 ```
 
 -previous_loan_defaults_on_file:
-```{r ej2, echo=FALSE}
+Se presenta un gráfico con la proporción de solicitantes que han fallado en pagar sus préstamos en el pasado.
+```{r , echo=FALSE}
 datos_previous_loan_defaults_on_file<- datos$previous_loan_defaults_on_file
 cant_si <- 0
 for (i in 1:nrow(datos)){
@@ -101,21 +117,19 @@ ggplot(df, aes(x = "", y = valores, fill = categoria)) +
 ```
 
 - loan_status (la que se va a predecir):
-```{r ej2, echo=FALSE}
+A continuación se presenta la proporción de préstamos otorgados
+```{r , echo=FALSE}
 datos_loan_status<- datos$loan_status
 media_loan_status <- mean(datos_loan_status)
 var_loan_status <- var(datos_loan_status)
 sd_loan_status <- sd(datos_loan_status)
 
 media_loan_status
-var_loan_status
-sd_loan_status
-
 ```
 
 Luego de evaluar las estadísticas descriptivas y los boxplots de los parámetros que consideramos más relevantes, procedemos a realizar el preprocesamiento de datos.
 
-```{r ej2, echo=FALSE}
+```{r , echo=FALSE}
 datos$person_gender <- as.factor(datos$person_gender)
 datos$person_education <- as.factor(datos$person_education)
 datos$person_home_ownership <- as.factor(datos$person_home_ownership)
@@ -125,7 +139,7 @@ datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_o
 
 ## 3. Construcción de un árbol de decisión básico
 
-```{r ej3, echo=FALSE}
+```{r , echo=FALSE}
 set.seed(678)
 n <- nrow(datos)
 
@@ -142,63 +156,64 @@ valid <- datos[valid_idx, ]
 test <- datos[test_idx, ]
 ```
 
-```{r ej3, echo=FALSE}
+```{r , echo=FALSE}
 library(rpart)
 library(rpart.plot)
 ```
 
-```{r ej3, echo=FALSE}
+```{r , echo=FALSE}
 base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
               data = train, 
               method = "class")
 ```
 
-```{r ej3, echo=FALSE}
+```{r , echo=FALSE}
 base_tree$control
 rpart.plot(base_tree)
+base_tree$variable.importance
 ```
 ## 4. Evaluación del árbol de decisión básico
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 base_predictions_class  <- predict(base_tree, newdata = test, type = "class")
 base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob")
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #install.packages("MLmetrics")
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #Accuracy
 library(MLmetrics)
 base_accuracy <- Accuracy(base_predictions_class, test$loan_status)
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #Matriz de confusión
 base_conf_matrix <- ConfusionMatrix(base_predictions_class, test$loan_status)
 base_conf_matrix
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #AUC
 base_AUC <- AUC(base_predictions_class, test$loan_status)
 base_AUC
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #F1 Score
 base_f1_score <- F1_Score(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_f1_score
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #Precision
 base_precision <- Precision(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_precision
 ```
 
-```{r ej4, echo=FALSE}
+```{r , echo=FALSE}
 #Recall
 base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
 base_recall
@@ -223,7 +238,7 @@ finalmente, en 1063 casos el modelo detectó correctamente la clase positiva.
 
 Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 train_tree_with_hyperparameters <- function(train_data, max_depth, min_split, min_bucket){
   tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
                 data = train_data, 
@@ -243,14 +258,14 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mejor_auc = 0
     AUCS <- c()
     for (i in 1:maxdepth_hasta){
-      print(i)
+      #print(i)
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
           #rpart.plot(tree)
           prediccion <- predict(tree, newdata = df_valid, type = "class")
           auc <- AUC(prediccion, df_valid$loan_status)
-          print(auc)
+          #print(auc)
           # Si el árbol actual tiene el AUC más alto hasta ahora, guardo los valores de los hiperparámetros
           if (!is.na(auc) && auc > mejor_auc){
             maxd <- i
@@ -268,17 +283,17 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 
 ```
 
-```{r ej5, echo=FALSE}
-#resultados <- gridSearch(train,valid,20,20,8)
+```{r , echo=FALSE}
+resultados <- gridSearch(train,valid,20,20,8)
 mejor_auc <- resultados[1]
 mejor_maxd <- resultados[2]
 mejor_mins <- resultados[3]
 mejor_minb <- resultados[4]
 aucs_calculados <- resultados[5:length(resultados)]
-aucs_calculados
+#aucs_calculados
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 #maxdepth
 x_maxD <- c()
 for (i in 1:20){
@@ -288,7 +303,7 @@ for (i in 1:20){
 }
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 # Gráfico de dispersión
 plot(x_maxD, aucs_calculados, 
      main = "AUc según max_depth", 
@@ -298,7 +313,7 @@ plot(x_maxD, aucs_calculados,
      pch = 19)  # pch define el tipo de punto
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 #minsplit
 x_minS <- c()
 for (i in 1:20){
@@ -310,7 +325,7 @@ for (i in 1:20){
 }
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 # Gráfico de dispersión
 plot(x_minS, aucs_calculados, 
      main = "AUc según minsplit", 
@@ -320,7 +335,7 @@ plot(x_minS, aucs_calculados,
      pch = 19)  # pch define el tipo de punto
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 #minbucket
 x_minB <- c()
 for (i in 1:160){
@@ -329,7 +344,7 @@ for (i in 1:160){
   }
 }
 ```
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 # Gráfico de dispersión
 plot(x_minB, aucs_calculados, 
      main = "AUc según minbucket", 
@@ -339,32 +354,52 @@ plot(x_minB, aucs_calculados,
      pch = 19)  # pch define el tipo de punto
 ```
 
-```{r ej5, echo=FALSE}
+```{r , echo=FALSE}
 # Entrenamos el arbol con mejor AUC
-tree <- train_tree_with_hyperparameters(train, mej_maxd, mej_mins, mej_minb)
+best_tree <- train_tree_with_hyperparameters(train, mej_maxd, mej_mins, mej_minb)
 
 # Predecimos sobre el conjunto de testeo
-prediccion <- predict(tree, newdata = test, type = "class")
+prediccion <- predict(best_tree, newdata = test, type = "class")
 auc <- AUC(prediccion, test$loan_status)
 auc
 ```
-Vemos que con la grid search mejoramos la performance (medida con el AUC). Con el arbol base el AUC era 0.83 y con el optimizado 0.86.,
-
-```{r ej5, echo=FALSE}
-#install.packages("plotly")
-library("plotly")
-```
-
-```{r ej5, echo=FALSE}
-#GRAFICOS
-```
+Vemos que con la grid search mejoramos la performance (medida con el AUC). Con el arbol base el AUC era 0.83 y con el optimizado 0.86.
 
 ## 6. Interpretación de resultados (10 puntos)
+Se presenta el arbol final optimizado
+```{r , echo=FALSE}
+best_tree$control
+rpart.plot(best_tree, roundint = FALSE)
+```
+Como se puede ver, el arbol optimizado es mucho más profundo y con más nodos finales. Esto nos dice que probablemente haya overfitting con respecto al arbol entrenado en el ejercicio 3. Sin embargo, como vimos en el 
+ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del arbol base, por lo l amayor flexibilidad del arbol no necesariamente tendría que ser un problema.
 
+Para identificar los nodos superiores del arbol, lo volvemos a graficar, pero solo hasta el nivel 5.
 
+```{r , echo=FALSE}
+best_tree$cptable
+
+# Podar el árbol con el valor de cp
+pruned_tree <- prune(best_tree, cp = 2.581330e-03)
+
+# Graficar el árbol podado
+rpart.plot(pruned_tree)
+
+best_tree$variable.importance
+```
+
+Como podemos ver, los primeros niveles del arbol se mantuvieron iguales que en el arbol base. Las variables más importantes no cambiaron. Esto nos indica que cambiar los hiperparámetros no llevó a cambios en la jerarquía de importancia dada a cada variable. Sin emabrgo, procedemos a hacer un análisis más exhaustivo con rpart para obtener la importancia de cada parametro real.
+
+```{r , echo=FALSE}
+print("Importancia de parámetros para el arbol base")
+base_tree$variable.importance
+print("Importancia de parámetros para el mejor arbol")
+best_tree$variable.importance
+```
+Como vemos, si hay cambios en los valores numéricos de la importancia de cada variable. Además, vemos que a partir de loan_intent comienzan a haber cambios en la jerarquía de importancia de las variables.
 ## 7. Análisis del impacto de los valores faltantes
 
-```{r ej7, echo=FALSE}
+```{r , echo=FALSE}
 datos_20 <- datos # 20% missings
 datos_50 <- datos # 50% missings
 datos_75 <- datos # 75% missings
@@ -394,7 +429,7 @@ for (col in colnames(datos_75)) {
 ```
 
 Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno
-```{r ej7, echo=FALSE}
+```{r , echo=FALSE}
 # Set 20% missings
 train_20 <- datos_20[train_idx, ]
 valid_20 <- datos_20[valid_idx, ]
@@ -407,7 +442,7 @@ test_20 <- datos_20[test_idx, ]
 # mej_minb_20 = mejor_arbol_20[4]
 ```
 
-```{r ej7, echo=FALSE}
+```{r , echo=FALSE}
 # Set 50% missings
 train_50 <- datos_50[train_idx, ]
 valid_50 <- datos_50[valid_idx, ]
@@ -420,7 +455,7 @@ test_50 <- datos_50[test_idx, ]
 # mej_minb_50 = mejor_arbol_50[3]
 ```
 
-```{r ej7, echo=FALSE}
+```{r , echo=FALSE}
 # Set 75% missings
 train_75 <- datos_75[train_idx, ]
 valid_75 <- datos_75[valid_idx, ]
@@ -433,28 +468,3 @@ test_75 <- datos_75[test_idx, ]
 # mej_minb_75 = mejor_arbol_75[3]
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```
