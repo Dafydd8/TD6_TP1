@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 ##Introducción al problema
 
-El presente trabajo aborda el problema de clasificación en la aprobación de préstamos utilizando el conjunto de datos Loan Approval Classification Data, disponible en Kaggle. Este dataset contiene información relevante sobre solicitudes de préstamo, incluyendo variables clave como historial crediticio, ingresos del solicitante, monto del préstamo, estado civil y nivel educativo, entre otras. El objetivo principal es predecir si una solicitud de préstamo será aprobada o rechazada en función de estos atributos.
+El presente trabajo aborda el problema de clasificación en la aprobación de préstamos utilizando el conjunto de datos Loan Approval Classification Data, disponible en Kaggle (https://www.kaggle.com/datasets/taweilo/loan-approval-classification-data). Este dataset contiene información relevante sobre solicitudes de préstamo, incluyendo variables clave como historial crediticio, ingresos del solicitante, monto del préstamo, estado civil y nivel educativo, entre otras. El objetivo principal es predecir si una solicitud de préstamo será aprobada o rechazada en función de estos atributos.
 
 La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. Finalmente, el dataset contiene una combinación de variables categóricas y numéricas, lo que permite evaluar la capacidad de los árboles de decisión para manejar distintos tipos de datos y generar reglas claras para la clasificación.
 
@@ -25,14 +25,25 @@ Consideramos que las variables principalmente influyentes a la hora de predecir 
 - Previous Loan Defaults on File: debería resultar relevante saber si el solicitante ya ha fallado en pagar deudas de préstamos en el pasado.
 
 ## Preparación de los datos
-```{r , echo=FALSE}
+Comenzamos cargando los datos desde el archivo csv accesible desde Kaggle.
+```{r , echo=TRUE}
 
-#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
 
+Luego, procedemos a realizar el preprocesamiento de datos. Primero nos aseguramos de que en el dataset no hay valores faltantes. Luego, para las variables categóricas, les convertimos sus valores a tipo factor.
+
+```{r , echo=FALSE}
+any(is.na(datos))
+datos$person_gender <- as.factor(datos$person_gender)
+datos$person_education <- as.factor(datos$person_education)
+datos$person_home_ownership <- as.factor(datos$person_home_ownership)
+datos$loan_intent <- as.factor(datos$loan_intent)
+datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_on_file)
+```
 Estadísticas descriptivas de las variables principales:
 - person_age:
 A continuación se presentan edad promedio de los solicitantes, varianza y desvío estándar:
@@ -46,7 +57,7 @@ boxplot(datos_person_age, main="person_age")
 Con el boxplot se puede ver que hay algunos outliers extraños de 140 años. Creemos que se debe a errores al cargar los datos. De todas formas, como son 5 casos de los 45000 totales, decidimos que no debería representar grandes problemas.
 
 - person_income:
-A continuación se presentan ingresos promedio de los solicitantes, varianza y desvío estándar:
+Ingresos promedio de los solicitantes, varianza y desvío estándar:
 ```{r, echo=FALSE}
 datos_person_income<- datos$person_income
 mean(datos_person_income)
@@ -56,7 +67,7 @@ boxplot(datos_person_income, main="person_income")
 
 ```
 - loan_amnt:
-A continuación se presentan monto pedido promedio de los solicitantes, varianza y desvío estándar:
+Monto pedido promedio de los solicitantes, varianza y desvío estándar:
 ```{r , echo=FALSE}
 datos_loan_amnt<- datos$loan_amnt
 mean(datos_loan_amnt)
@@ -65,7 +76,7 @@ sd(datos_loan_amnt)
 boxplot(datos_loan_amnt, main="loan_amnt")
 ```
 -person_home_ownership:
-A continuación se muestra la cantidad de casos para cada categoría de esta variable:
+Cantidad de casos para cada categoría de esta variable:
 ```{r , echo=FALSE}
 library(ggplot2)
 # Convertir a dataframe
@@ -79,7 +90,7 @@ ggplot(datos_person_home_ownership, aes(x = person_home_ownership)) +
 ```
 
 -credit_score:
-A continuación se presenta el puntaje crediticio promedio de los solicitantes, varianza y desvío estándar:
+Puntaje crediticio promedio de los solicitantes, varianza y desvío estándar:
 ```{r , echo=FALSE}
 datos_credit_score<- datos$credit_score
 mean(datos_credit_score)
@@ -117,7 +128,7 @@ ggplot(df, aes(x = "", y = valores, fill = categoria)) +
 ```
 
 - TARGET: loan_status (la variable que se quiere predecir):
-A continuación se presenta la proporción de préstamos otorgados
+Proporción de préstamos otorgados
 ```{r , echo=FALSE}
 datos_loan_status<- datos$loan_status
 media_loan_status <- mean(datos_loan_status)
@@ -126,20 +137,12 @@ sd_loan_status <- sd(datos_loan_status)
 
 media_loan_status
 ```
-
-Luego de evaluar las estadísticas descriptivas y los boxplots de los parámetros que consideramos más relevantes, procedemos a realizar el preprocesamiento de datos.
-
-```{r , echo=FALSE}
-datos$person_gender <- as.factor(datos$person_gender)
-datos$person_education <- as.factor(datos$person_education)
-datos$person_home_ownership <- as.factor(datos$person_home_ownership)
-datos$loan_intent <- as.factor(datos$loan_intent)
-datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_on_file)
-```
+Vemos que hay aproximadamente un 20% de positivos en la variable predictora. Este es un buen número para realizar un entrenamiento, la cantidad de positivos es considerable y no está altamente desbalanceada con respecto a la de negativos.
 
 ## 3. Construcción de un árbol de decisión básico
 
 ```{r , echo=FALSE}
+# Separación de los datos en conjuntos de training, validation y test
 set.seed(678)
 n <- nrow(datos)
 
@@ -157,20 +160,23 @@ test <- datos[test_idx, ]
 ```
 
 ```{r , echo=FALSE}
+#import de librerias a usar
 library(rpart)
 library(rpart.plot)
 ```
 
 ```{r , echo=FALSE}
+# Entrenamiento de un arbol base con hiperparámetros por defecto
 base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
               data = train, 
               method = "class")
 ```
 
 ```{r , echo=FALSE}
+# Obtención de los valores de hiperparámetros por defecto
 base_tree$control
+# Visualización del arbol obtenido
 rpart.plot(base_tree)
-base_tree$variable.importance
 ```
 La clase predicha para las observaciones en los nodos celestes es 0 (no recibe el préstamo), y la clase predicha para las observaciones en los nodos verdes es 1 (recibe el préstamo). 
 
@@ -185,8 +191,9 @@ En total, el árbol tiene 5 niveles.
 ## 4. Evaluación del árbol de decisión básico
 
 ```{r , echo=FALSE}
-base_predictions_class  <- predict(base_tree, newdata = test, type = "class")
-base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob")
+# Predicciones sobre el conjunto de testeo
+base_predictions_class  <- predict(base_tree, newdata = test, type = "class") #clases predichas
+base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob") #probabilidades predichas
 ```
 
 ```{r , echo=FALSE}
@@ -229,27 +236,31 @@ base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # 
 base_recall
 ```
 
-- Accuracy: Esta metrica nos dio como resultado  0.9117168, lo que significa que el modelo clasifica correctamente el 91.17% de los casos en el conjunto de prueba.
+- Accuracy: Esta metrica nos dio como resultado  0.9117168, lo que significa que el modelo clasifica correctamente el 91.17% de los casos en el conjunto de test
 
 - Precision: De los que dijimos que eran positivos,  72,2% son efectivamente positivos.
 
 - recall: De los que efectivamente son positivos, el 83,5% dijimos que eran positivos.
 
-- F1-score: Esta metrica nos dió como resultado 0,7745  modelo tiene un buen balance entre precisión y recall, aunque no es perfecto.
+- F1-score: Esta metrica nos dió como resultado 0,7745. El modelo tiene un buen balance entre precisión y recall, aunque no es perfecto.
 
 - AUC-ROC: Nos dio  0.8423256, lo que significa que el modelo tiene buena  capacidad de clasificacion, esta arriba de un modelo aleatorio.
 
-- Matriz de confusión:La matriz indica que el modelo clasificó correctamente 5069 casos negativos, es decir, donde la clase real era 0 y el modelo también predijo 0. 
-
+- Matriz de confusión: La matriz indica que el modelo clasificó correctamente 5069 casos negativos, es decir, donde la clase real era 0 y el modelo también predijo 0. 
 Hubieron 210 casos en los que el modelo predijo 1 (positivo), pero en realidad la clase era 0.
 El modelo falló en 409 casos donde la clase real era 1, pero predijo 0. Hay algunos casos positivos que no fueron detectados correctamente.
 Finalmente, en 1063 casos el modelo detectó correctamente la clase positiva.
 
 ## 5. Optimización del modelo
 
-Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
+Nuestro objetivo es hallar la combinación de hiperparámetros que nos dan el árbol con mayor AUC-ROC.
+
+Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket, creamos la función gridSearch. Esta recibe como parámetros los conjuntos de training y validation de un dataframe, y los valores máximos de maxdepth, minsplit y minbucket que vamos a probar. 
+
+También implementamos la función train_tree_with_hyperparameters, que dado un conjunto de entrenamiento y valores de maxdepth, minsplit y minbucket, entrena y retorna un árbol con esos valores de hiperparámetros.
 
 ```{r , echo=FALSE}
+# Funciones auxiliares
 train_tree_with_hyperparameters <- function(train_data, max_depth, min_split, min_bucket){
   tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
                 data = train_data, 
@@ -269,6 +280,7 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mejor_auc = 0
     AUCS <- c()
     for (i in 1:maxdepth_hasta){
+      print(i)
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
@@ -291,21 +303,23 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 
 ```
 
+Realizamos un Grid Search usando el conjunto de validación para ir midiendo el AUC y encontrar el que mejor responde. Los valores máximos de maxdepth, minsplit y minbucket que usamos en la búsqueda fueron un poco mayores que los que el árbol usa por default, tratando de que haya un buen balance entre la exhaustividad de la búsqueda y el tiempo de cómputo.
 ```{r , echo=FALSE}
-resultados <- gridSearch(train,valid,20,20,8)
-mejor_auc <- resultados[1]
-mejor_maxd <- resultados[2]
-mejor_mins <- resultados[3]
-mejor_minb <- resultados[4]
-aucs_calculados <- resultados[5:length(resultados)]
+# 
+resultados <- gridSearch(train,valid,25,35,10)
+mejor_auc <- resultados[1] #mejor auc obtenido
+mejor_maxd <- resultados[2] #maxdepth del mejor arbol
+mejor_mins <- resultados[3] #minsplit del mejor arbol
+mejor_minb <- resultados[4] #minbucket del mejor arbol
+aucs_calculados <- resultados[5:length(resultados)] #aucs computados en la búsqueda en orden
 #aucs_calculados
 ```
-
+Realizada la grid search, graficamos la relación de cada una de los hiperparámetros con el AUC del árbol.
 ```{r , echo=FALSE}
 #maxdepth
 x_maxD <- c()
-for (i in 1:20){
-  for (j in 1:160){
+for (i in 1:25){
+  for (j in 1:350){
     x_maxD <- c(x_maxD, i)
   }
 }
@@ -324,9 +338,9 @@ plot(x_maxD, aucs_calculados,
 ```{r , echo=FALSE}
 #minsplit
 x_minS <- c()
-for (i in 1:20){
-  for (j in 1:20){
-    for (k in 1:8){
+for (i in 1:25){
+  for (j in 1:35){
+    for (k in 1:10){
       x_minS <- c(x_minS, j)
     }
   }
@@ -346,8 +360,8 @@ plot(x_minS, aucs_calculados,
 ```{r , echo=FALSE}
 #minbucket
 x_minB <- c()
-for (i in 1:160){
-  for (j in 1:20){
+for (i in 1:875){
+  for (j in 1:10){
     x_minB <- c(x_minB, j)
   }
 }
@@ -362,10 +376,10 @@ plot(x_minB, aucs_calculados,
      col = "orange", 
      pch = 19)  
 ```
-
+Luego entrenamos un arbol con los parámetros que encontramos que optimizan el AUC del arbol (maxdepth = 20, minsplit = 1 y minbucket = 10) y predecimos sobre el conjunto de test.
 ```{r , echo=FALSE}
 # Entrenamos el arbol con mejor AUC
-best_tree <- train_tree_with_hyperparameters(train, mej_maxd, mej_mins, mej_minb)
+best_tree <- train_tree_with_hyperparameters(train, mejor_maxd, mejor_mins, mejor_minb)
 
 # Predecimos sobre el conjunto de testeo
 prediccion <- predict(best_tree, newdata = test, type = "class")
@@ -376,13 +390,13 @@ Vemos que con la grid search mejoramos la performance (medida con el AUC). Con e
 
 ## 6. Interpretación de resultados (10 puntos)
 
-Se presenta el arbol final optimizado
+Se presenta el arbol final optimizado (hiperparámetros y visualización).
 ```{r , echo=FALSE}
 best_tree$control
 rpart.plot(best_tree, roundint = FALSE)
 ```
 Observamos que el árbol optimizado es mucho más profundo y con más nodos finales, lo cuál puede significar que hay overfitting con respecto al árbol entrenado en el ejercicio 3. 
-Sin embargo, como vimos en el ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del árbol base, por lo cuál la mayor flexibilidad del árbol no necesariamente tendría que ser un problema.
+Sin embargo, como vimos en el ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del árbol base, por lo cuál la mayor flexibilidad del árbol no necesariamente tendría que ser un problema, el árbol predice mejor para el conjunto de test.
 
 Para identificar los nodos superiores del arbol, lo volvemos a graficar, pero solo hasta el nivel 5.
 
@@ -406,10 +420,12 @@ base_tree$variable.importance
 print("Importancia de parámetros para el mejor arbol")
 best_tree$variable.importance
 ```
-Como vemos, si hay cambios en los valores numéricos de la importancia de cada variable. Además, vemos que a partir de loan_intent comienzan a haber cambios en la jerarquía de importancia de las variables.
+Como vemos, si hay cambios en los valores numéricos de la importancia de cada variable. Además, vemos que a partir de loan_intent comienzan a haber cambios en la jerarquía de importancia de las variables (hay variables que se vuelven más importantes que otras que las superaban en importancia en el árbol base).
 
 ## 7. Análisis del impacto de los valores faltantes
 
+Primero, creamoas 3 datasets nuevos, copias del original, asiganando la cantidad de missings por columna pedida en cada uno. Cabe recalcar que las observaciones que pertenecen a cada versión del conjunto de entrenamiento,
+validación y testeo, son las mismas.
 ```{r , echo=FALSE}
 datos_20 <- datos # 20% missings
 datos_50 <- datos # 50% missings
@@ -435,43 +451,49 @@ for (col in colnames(datos_75)) {
 
 ```
 
-Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno
+Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno. Sin embargo, al conjunto de validación le asignamos los del conjunto de validación sin missings, dado que no es posible sino calcular el AUC sobre este modelo.
 ```{r , echo=FALSE}
 # Set 20% missings
 train_20 <- datos_20[train_idx, ]
 valid_20 <- datos_20[valid_idx, ]
+valid_20$loan_status <- valid$loan_status
 test_20 <- datos_20[test_idx, ]
 
-# mejor_arbol_20 <- gridSearch(train_20,valid_20,20,20,8)
-# mej_auc_20 = mejor_arbol_20[1]
-# mej_maxd_20 = mejor_arbol_20[2]
-# mej_mins_20 = mejor_arbol_20[3]
-# mej_minb_20 = mejor_arbol_20[4]
+mejor_arbol_20 <- gridSearch(train_20,valid_20,25,35,10)
+mej_auc_20 <- mejor_arbol_20[1]
+mej_maxd_20 <- mejor_arbol_20[2]
+mej_mins_20 <- mejor_arbol_20[3]
+mej_minb_20 <- mejor_arbol_20[4]
+aucs_caluclados_20 <- mejor_arbol_20[5:length(mejor_arbol_20)]
 ```
 
 ```{r , echo=FALSE}
 # Set 50% missings
 train_50 <- datos_50[train_idx, ]
 valid_50 <- datos_50[valid_idx, ]
+valid_50$loan_status <- valid$loan_status
 test_50 <- datos_50[test_idx, ]
 
-# mejor_arbol_50 <- gridSearch(train_50,valid_50,20,20,8)
-# mej_auc_50 = mejor_arbol_50[0]
-# mej_maxd_50 = mejor_arbol_50[1]
-# mej_mins_50 = mejor_arbol_50[2]
-# mej_minb_50 = mejor_arbol_50[3]
+mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
+mej_auc_50 = mejor_arbol_50[1]
+mej_maxd_50 = mejor_arbol_50[2]
+mej_mins_50 = mejor_arbol_50[3]
+mej_minb_50 = mejor_arbol_50[4]
+aucs_caluclados_50 <- mejor_arbol_50[5:length(mejor_arbol_50)]
 ```
 
 ```{r , echo=FALSE}
 # Set 75% missings
 train_75 <- datos_75[train_idx, ]
 valid_75 <- datos_75[valid_idx, ]
+valid_75$loan_status <- valid$loan_status
 test_75 <- datos_75[test_idx, ]
 
-# mejor_arbol_75 <- gridSearch(train_75,valid_75,20,20,8)
-# mej_auc_75 = mejor_arbol_75[0]
-# mej_maxd_75 = mejor_arbol_75[1]
-# mej_mins_75 = mejor_arbol_75[2]
-# mej_minb_75 = mejor_arbol_75[3]
+mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
+mej_auc_75 = mejor_arbol_75[1]
+mej_maxd_75 = mejor_arbol_75[2]
+mej_mins_75 = mejor_arbol_75[3]
+mej_minb_75 = mejor_arbol_75[4]
+aucs_caluclados_75 <- mejor_arbol_75[5:length(mejor_arbol_75)]
 ```
 
