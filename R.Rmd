@@ -28,8 +28,8 @@ Consideramos que las variables principalmente influyentes a la hora de predecir 
 Comenzamos cargando los datos desde el archivo csv accesible desde Kaggle.
 ```{r , echo=TRUE}
 
-datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
-#datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
+#datos <- read.csv('C:\\Users\\dafyd\\Documents\\Escuela\\2025\\semestre 1\\TD6\\TP1\\loan_data.csv', header=TRUE)
+datos <- read.csv('C:/Users/smare/OneDrive/Desktop/git/tp1td6/TD6_TP1/loan_data.csv', header=TRUE)
 datos
 
 ```
@@ -280,7 +280,6 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
     mejor_auc = 0
     AUCS <- c()
     for (i in 1:maxdepth_hasta){
-      print(i)
       for (j in 1:minsplit_hasta){
         for (k in 1:minbucket_hasta){
           tree <- train_tree_with_hyperparameters(df_train, i, j, k)
@@ -306,13 +305,12 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 Realizamos un Grid Search usando el conjunto de validación para ir midiendo el AUC y encontrar el que mejor responde. Los valores máximos de maxdepth, minsplit y minbucket que usamos en la búsqueda fueron un poco mayores que los que el árbol usa por default, tratando de que haya un buen balance entre la exhaustividad de la búsqueda y el tiempo de cómputo.
 ```{r , echo=FALSE}
 # 
-resultados <- gridSearch(train,valid,25,35,10)
+#resultados <- gridSearch(train,valid,25,35,10)
 mejor_auc <- resultados[1] #mejor auc obtenido
 mejor_maxd <- resultados[2] #maxdepth del mejor arbol
 mejor_mins <- resultados[3] #minsplit del mejor arbol
 mejor_minb <- resultados[4] #minbucket del mejor arbol
 aucs_calculados <- resultados[5:length(resultados)] #aucs computados en la búsqueda en orden
-#aucs_calculados
 ```
 Realizada la grid search, graficamos la relación de cada una de los hiperparámetros con el AUC del árbol.
 ```{r , echo=FALSE}
@@ -383,8 +381,8 @@ best_tree <- train_tree_with_hyperparameters(train, mejor_maxd, mejor_mins, mejo
 
 # Predecimos sobre el conjunto de testeo
 prediccion <- predict(best_tree, newdata = test, type = "class")
-auc <- AUC(prediccion, test$loan_status)
-auc
+auc_best_tree <- AUC(prediccion, test$loan_status)
+auc_best_tree
 ```
 Vemos que con la grid search mejoramos la performance (medida con el AUC). Con el arbol base el AUC era 0.83 y con el optimizado 0.86.
 
@@ -451,7 +449,7 @@ for (col in colnames(datos_75)) {
 
 ```
 
-Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno. Sin embargo, al conjunto de validación le asignamos los del conjunto de validación sin missings, dado que no es posible sino calcular el AUC sobre este modelo.
+Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno. Al conjunto de validación le asignamos los del conjunto de validación sin missings, dado que no es posible sino calcular el AUC sobre este modelo.
 ```{r , echo=FALSE}
 # Set 20% missings
 train_20 <- datos_20[train_idx, ]
@@ -459,13 +457,25 @@ valid_20 <- datos_20[valid_idx, ]
 valid_20$loan_status <- valid$loan_status
 test_20 <- datos_20[test_idx, ]
 
-mejor_arbol_20 <- gridSearch(train_20,valid_20,25,35,10)
-mej_auc_20 <- mejor_arbol_20[1]
-mej_maxd_20 <- mejor_arbol_20[2]
-mej_mins_20 <- mejor_arbol_20[3]
-mej_minb_20 <- mejor_arbol_20[4]
-aucs_caluclados_20 <- mejor_arbol_20[5:length(mejor_arbol_20)]
+#mejor_arbol_20 <- gridSearch(train_20,valid_20,25,35,10)
+mejor_auc_20 <- mejor_arbol_20[1]
+mejor_maxd_20 <- mejor_arbol_20[2]
+mejor_mins_20 <- mejor_arbol_20[3]
+mejor_minb_20 <- mejor_arbol_20[4]
+aucs_calculados_20 <- mejor_arbol_20[5:length(mejor_arbol_20)]
 ```
+
+Entrenamos un árbol con los parámetros que encontramos que optimizan el AUC del árbol y predecimos sobre el conjunto de test.
+```{r , echo=FALSE}
+# Entrenamos el arbol con mejor AUC
+best_tree_20 <- train_tree_with_hyperparameters(train, mejor_maxd_20, mejor_mins_20, mejor_minb_20)
+
+# Predecimos sobre el conjunto de testeo
+prediccion <- predict(best_tree_20, newdata = test_20, type = "class")
+auc_20 <- AUC(prediccion, test$loan_status)
+```
+
+Repetimos el mismo procedimiento para los demás sets con missings 
 
 ```{r , echo=FALSE}
 # Set 50% missings
@@ -474,12 +484,19 @@ valid_50 <- datos_50[valid_idx, ]
 valid_50$loan_status <- valid$loan_status
 test_50 <- datos_50[test_idx, ]
 
-mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
-mej_auc_50 = mejor_arbol_50[1]
-mej_maxd_50 = mejor_arbol_50[2]
-mej_mins_50 = mejor_arbol_50[3]
-mej_minb_50 = mejor_arbol_50[4]
-aucs_caluclados_50 <- mejor_arbol_50[5:length(mejor_arbol_50)]
+#mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
+mejor_auc_50 = mejor_arbol_50[1]
+mejor_maxd_50 = mejor_arbol_50[2]
+mejor_mins_50 = mejor_arbol_50[3]
+mejor_minb_50 = mejor_arbol_50[4]
+aucs_calculados_50 <- mejor_arbol_50[5:length(mejor_arbol_50)]
+```
+
+```{r , echo=FALSE}
+best_tree_50 <- train_tree_with_hyperparameters(train, mejor_maxd_50, mejor_mins_50, mejor_minb_50)
+
+prediccion <- predict(best_tree_50, newdata = test_50, type = "class")
+auc_50 <- AUC(prediccion, test$loan_status)
 ```
 
 ```{r , echo=FALSE}
@@ -489,11 +506,42 @@ valid_75 <- datos_75[valid_idx, ]
 valid_75$loan_status <- valid$loan_status
 test_75 <- datos_75[test_idx, ]
 
-mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
-mej_auc_75 = mejor_arbol_75[1]
-mej_maxd_75 = mejor_arbol_75[2]
-mej_mins_75 = mejor_arbol_75[3]
-mej_minb_75 = mejor_arbol_75[4]
-aucs_caluclados_75 <- mejor_arbol_75[5:length(mejor_arbol_75)]
+# mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
+mejor_auc_75 = mejor_arbol_75[1]
+mejor_maxd_75 = mejor_arbol_75[2]
+mejor_mins_75 = mejor_arbol_75[3]
+mejor_minb_75 = mejor_arbol_75[4]
+aucs_calculados_75 <- mejor_arbol_75[5:length(mejor_arbol_75)]
 ```
+
+```{r , echo=FALSE}
+best_tree_75 <- train_tree_with_hyperparameters(train, mejor_maxd_75, mejor_mins_75, mejor_minb_75)
+
+# Predecimos sobre el conjunto de testeo
+prediccion <- predict(best_tree_75, newdata = test_75, type = "class")
+auc_75 <- AUC(prediccion, test$loan_status)
+```
+
+Graficamos los árboles?
+
+```{r , echo=FALSE}
+x <- c(auc_best_tree, auc_20, auc_50, auc_75)
+y <- c(0, 20, 50, 75)
+
+plot(x, y, type = "o", col = "red", lwd = 2, pch = 16,  
+     main = "Relación entre el AUC-ROC y el porcentaje de valores faltantes",
+     xlab = "AUC-ROC", ylab = "Porcentaje de missings", yaxt = "n")  
+grid(nx = NULL, ny = NA, col = "gray90", lty = "dotted")  
+grid(nx = NA, ny = NULL, col = "gray90", lty = "dotted")  
+axis(2, at = y) 
+```
+
+Como podemos observar, el AUC-ROC cae a medida que aumenta el porcentaje de datos faltantes. Por ende, el mayor AUC-ROC que se alcanza es el obtenido para el árbol optimizado con los siguientes valores de hiperparámetros:
+
+maxdepth (Máxima profundiad del árbol) = 20
+minsplit (Cant. mínima de observaciones para hacer un corte) = 1
+minbucket (Cant. mínima de observaciones en una hoja) = 10
+
+
+
 
