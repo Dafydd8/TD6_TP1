@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 El presente trabajo aborda el problema de clasificación en la aprobación de préstamos utilizando el conjunto de datos Loan Approval Classification Data, disponible en Kaggle (https://www.kaggle.com/datasets/taweilo/loan-approval-classification-data). Este dataset contiene información relevante sobre solicitudes de préstamo, incluyendo variables clave como historial crediticio, ingresos del solicitante, monto del préstamo, estado civil y nivel educativo, entre otras. El objetivo principal es predecir si una solicitud de préstamo será aprobada o rechazada en función de estos atributos.
 
-La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. Finalmente, el dataset contiene una combinación de variables categóricas y numéricas, lo que permite evaluar la capacidad de los árboles de decisión para manejar distintos tipos de datos y generar reglas claras para la clasificación.
+La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. El dataset tiene una cantidad razonable de variables predictoras y de observaciones, y contiene tanto variables categóricas como numéricas, lo cuál nos pareció adecuado para evaluar la capacidad de los árboles de decisión para manejae distintos tipos de datos.
 
 Consideramos que las variables principalmente influyentes a la hora de predecir serán:
 - Person age: mayor edad puede asociarse a mayor solvencia económica o estabilidad financiera.
@@ -54,6 +54,14 @@ var(datos_person_age)
 sd(datos_person_age)
 boxplot(datos_person_age, main="person_age")
 ```
+
+[1] 27.76418
+[1] 36.54333
+[1] 6.045108
+
+Algunas características observadas:
+- La mayoría de las personas que solicitan un préstamo tienen entre 20 y 40 años aproximadamente, con una media de 27.76418. 
+
 Con el boxplot se puede ver que hay algunos outliers extraños de 140 años. Creemos que se debe a errores al cargar los datos. De todas formas, como son 5 casos de los 45000 totales, decidimos que no debería representar grandes problemas.
 
 - person_income:
@@ -430,34 +438,39 @@ datos_50 <- datos # 50% missings
 datos_75 <- datos # 75% missings
 
 for (col in colnames(datos_20)) {
-  cant_missings <- round(nrow(datos_20) * 0.2)
-  na_positions <- sample(nrow(datos_20), cant_missings, replace = FALSE)
-  datos_20[na_positions, col] <- NA  
+  if (col != "loan_status") { 
+    cant_missings <- round(nrow(datos_20) * 0.2)
+    na_positions <- sample(nrow(datos_20), cant_missings, replace = FALSE)
+    datos_20[na_positions, col] <- NA  
+  }
 }
 
 for (col in colnames(datos_50)) {
-  cant_missings <- round(nrow(datos_50) * 0.5)
-  na_positions <- sample(nrow(datos_50), cant_missings, replace = FALSE)
-  datos_50[na_positions, col] <- NA  
+  if (col != "loan_status") {
+    cant_missings <- round(nrow(datos_50) * 0.5)
+    na_positions <- sample(nrow(datos_50), cant_missings, replace = FALSE)
+    datos_50[na_positions, col] <- NA
+  }
 }
 
 for (col in colnames(datos_75)) {
-  cant_missings <- round(nrow(datos_75) * 0.75)
-  na_positions <- sample(nrow(datos_75), cant_missings, replace = FALSE)
-  datos_75[na_positions, col] <- NA  
+  if (col != "loan_status") {
+    cant_missings <- round(nrow(datos_75) * 0.75)
+    na_positions <- sample(nrow(datos_75), cant_missings, replace = FALSE)
+    datos_75[na_positions, col] <- NA  
+  }
 }
 
 ```
 
-Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno. Al conjunto de validación le asignamos los del conjunto de validación sin missings, dado que no es posible sino calcular el AUC sobre este modelo.
+Creamos los conjuntos de train, validation y test para los 3 sets nuevos y hacemos grid search para cada uno.
 ```{r , echo=FALSE}
 # Set 20% missings
 train_20 <- datos_20[train_idx, ]
 valid_20 <- datos_20[valid_idx, ]
-valid_20$loan_status <- valid$loan_status
 test_20 <- datos_20[test_idx, ]
 
-#mejor_arbol_20 <- gridSearch(train_20,valid_20,25,35,10)
+mejor_arbol_20 <- gridSearch(train_20,valid_20,25,35,10)
 mejor_auc_20 <- mejor_arbol_20[1]
 mejor_maxd_20 <- mejor_arbol_20[2]
 mejor_mins_20 <- mejor_arbol_20[3]
@@ -466,6 +479,7 @@ aucs_calculados_20 <- mejor_arbol_20[5:length(mejor_arbol_20)]
 ```
 
 Entrenamos un árbol con los parámetros que encontramos que optimizan el AUC del árbol y predecimos sobre el conjunto de test.
+
 ```{r , echo=FALSE}
 # Entrenamos el arbol con mejor AUC
 best_tree_20 <- train_tree_with_hyperparameters(train, mejor_maxd_20, mejor_mins_20, mejor_minb_20)
@@ -473,6 +487,7 @@ best_tree_20 <- train_tree_with_hyperparameters(train, mejor_maxd_20, mejor_mins
 # Predecimos sobre el conjunto de testeo
 prediccion <- predict(best_tree_20, newdata = test_20, type = "class")
 auc_20 <- AUC(prediccion, test$loan_status)
+auc_20
 ```
 
 Repetimos el mismo procedimiento para los demás sets con missings 
@@ -481,7 +496,6 @@ Repetimos el mismo procedimiento para los demás sets con missings
 # Set 50% missings
 train_50 <- datos_50[train_idx, ]
 valid_50 <- datos_50[valid_idx, ]
-valid_50$loan_status <- valid$loan_status
 test_50 <- datos_50[test_idx, ]
 
 #mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
@@ -497,13 +511,13 @@ best_tree_50 <- train_tree_with_hyperparameters(train, mejor_maxd_50, mejor_mins
 
 prediccion <- predict(best_tree_50, newdata = test_50, type = "class")
 auc_50 <- AUC(prediccion, test$loan_status)
+auc_50
 ```
 
 ```{r , echo=FALSE}
 # Set 75% missings
 train_75 <- datos_75[train_idx, ]
 valid_75 <- datos_75[valid_idx, ]
-valid_75$loan_status <- valid$loan_status
 test_75 <- datos_75[test_idx, ]
 
 # mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
@@ -520,9 +534,8 @@ best_tree_75 <- train_tree_with_hyperparameters(train, mejor_maxd_75, mejor_mins
 # Predecimos sobre el conjunto de testeo
 prediccion <- predict(best_tree_75, newdata = test_75, type = "class")
 auc_75 <- AUC(prediccion, test$loan_status)
+auc_75
 ```
-
-Graficamos los árboles?
 
 ```{r , echo=FALSE}
 x <- c(auc_best_tree, auc_20, auc_50, auc_75)
