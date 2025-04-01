@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 El presente trabajo aborda el problema de clasificación en la aprobación de préstamos utilizando el conjunto de datos Loan Approval Classification Data, disponible en Kaggle (https://www.kaggle.com/datasets/taweilo/loan-approval-classification-data). Este dataset contiene información relevante sobre solicitudes de préstamo, incluyendo variables clave como historial crediticio, ingresos del solicitante, monto del préstamo, estado civil y nivel educativo, entre otras. El objetivo principal es predecir si una solicitud de préstamo será aprobada o rechazada en función de estos atributos.
 
-La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. El dataset tiene una cantidad razonable de variables predictoras y de observaciones, y contiene tanto variables categóricas como numéricas, lo cuál nos pareció adecuado para evaluar la capacidad de los árboles de decisión para manejae distintos tipos de datos.
+La elección de este conjunto de datos para la aplicación de árboles de decisión se justifica por varias razones. En primer lugar, el problema es de naturaleza discreta y estructurada, lo que facilita la segmentación y análisis de las características mediante divisiones sucesivas. Además, los árboles de decisión ofrecen interpretabilidad, permitiendo entender cómo cada variable influye en la decisión final. El dataset tiene una cantidad razonable de variables predictoras y de observaciones, y contiene tanto variables categóricas como numéricas, lo cuál nos pareció adecuado para evaluar la capacidad de los árboles de decisión para manejar distintos tipos de datos.
 
 Consideramos que las variables principalmente influyentes a la hora de predecir serán:
 - Person age: mayor edad puede asociarse a mayor solvencia económica o estabilidad financiera.
@@ -44,6 +44,7 @@ datos$person_home_ownership <- as.factor(datos$person_home_ownership)
 datos$loan_intent <- as.factor(datos$loan_intent)
 datos$previous_loan_defaults_on_file <- as.factor(datos$previous_loan_defaults_on_file)
 ```
+
 Estadísticas descriptivas de las variables principales:
 - person_age:
 A continuación se presentan edad promedio de los solicitantes, varianza y desvío estándar:
@@ -59,7 +60,7 @@ boxplot(datos_person_age, main="person_age")
 [1] 36.54333
 [1] 6.045108
 
-Algunas características observadas:
+Observaciones:
 - La mayoría de las personas que solicitan un préstamo tienen entre 20 y 40 años aproximadamente, con una media de 27.76418. 
 
 Con el boxplot se puede ver que hay algunos outliers extraños de 140 años. Creemos que se debe a errores al cargar los datos. De todas formas, como son 5 casos de los 45000 totales, decidimos que no debería representar grandes problemas.
@@ -74,6 +75,9 @@ sd(datos_person_income)
 boxplot(datos_person_income, main="person_income")
 
 ```
+Observaciones:
+- Parecieran haber muchos outliers en el dataset (observado en el boxplot).
+
 - loan_amnt:
 Monto pedido promedio de los solicitantes, varianza y desvío estándar:
 ```{r , echo=FALSE}
@@ -83,7 +87,10 @@ var(datos_loan_amnt)
 sd(datos_loan_amnt)
 boxplot(datos_loan_amnt, main="loan_amnt")
 ```
--person_home_ownership:
+Observaciones:
+- Parecieran haber muchos outliers en el dataset (observado en el boxplot).
+
+- person_home_ownership:
 Cantidad de casos para cada categoría de esta variable:
 ```{r , echo=FALSE}
 library(ggplot2)
@@ -145,7 +152,8 @@ sd_loan_status <- sd(datos_loan_status)
 
 media_loan_status
 ```
-Vemos que hay aproximadamente un 20% de positivos en la variable predictora. Este es un buen número para realizar un entrenamiento, la cantidad de positivos es considerable y no está altamente desbalanceada con respecto a la de negativos.
+Observaciones:
+- Vemos que hay aproximadamente un 20% de positivos en la variable predictora. Este es un buen número para realizar un entrenamiento, la cantidad de positivos es considerable y no está altamente desbalanceada con respecto a la de negativos.
 
 ## 3. Construcción de un árbol de decisión básico
 
@@ -192,7 +200,7 @@ Raíz del árbol: Toma la feature previous_loan_defaults_on file. Separa a quien
 
 El segundo corte del árbol se realiza con la feature loan_percent_income, que representa el ratio entre el importe del préstamo solicitado por una persona y su ingreso anual. La categoría predicha para el nodo que representa este corte es NO. Sin embargo, suponiendo que el threshold=0.5, este nodo tiene una alta impureza. Esto tiene sentido, ya que sabemos que la media de loan_status del conjunto de datos es 0.22 (muy poca gente recibe el préstamo), y a su vez todas las personas que si recibieron el préstamo caen en este nodo.
 
-Podemos ver que la clase predicha para el nodo que se desprende de la rama izquierda (loan_percent_income < 0.26) es NO, mientras que la clase predicha para el nodo derecho es YES. Esto nos da la intuición de que la mayoría de las personas con un loan_percent_income menor a 0.26 no recibirán el préstamo, mientras que aquellos con un loan_percent_income mayor o igual a 0.26 tendrán más chances de que su solicitud sea aceptada. REVISAR
+Podemos ver que la clase predicha para el nodo que se desprende de la rama izquierda (loan_percent_income < 0.26) es NO, mientras que la clase predicha para el nodo derecho es YES. Esto nos da la intuición de que la mayoría de las personas con un loan_percent_income menor a 0.26 no recibirán el préstamo, mientras que aquellos con un loan_percent_income mayor o igual a 0.26 tendrán más chances de que su solicitud sea aceptada.
 
 En total, el árbol tiene 5 niveles.
 
@@ -382,6 +390,10 @@ plot(x_minB, aucs_calculados,
      col = "orange", 
      pch = 19)  
 ```
+
+Con estas visualizaciones se puede ver los distintos valores que toma el AUC para un mismo valor de hiperparámetro (debido a que para un mismo valor de maxdepth, por ejemplo, se mide el AUC con otros valores de minsplit y minbucket).
+Observamos que pareciera que el rendimiento (medido con el AUC) del árbol pareciera estar influenciado solamente por el maxdepth. Para minsplit y minbucket, en sus gráficos apreciamos que para cada valor posible de estos parámetros, la distribución de los puntos es idéntica, lo cual no pasa con maxdepth.
+
 Luego entrenamos un arbol con los parámetros que encontramos que optimizan el AUC del arbol (maxdepth = 20, minsplit = 1 y minbucket = 10) y predecimos sobre el conjunto de test.
 ```{r , echo=FALSE}
 # Entrenamos el arbol con mejor AUC
@@ -548,13 +560,24 @@ grid(nx = NULL, ny = NA, col = "gray90", lty = "dotted")
 grid(nx = NA, ny = NULL, col = "gray90", lty = "dotted")  
 axis(2, at = y) 
 ```
-
-Como podemos observar, el AUC-ROC cae a medida que aumenta el porcentaje de datos faltantes. Por ende, el mayor AUC-ROC que se alcanza es el obtenido para el árbol optimizado con los siguientes valores de hiperparámetros:
+Parciera que hay una relación casi lineal entre la cantidad de valores faltantes y la performance del modelo medida con el AUC.Como podemos observar, el AUC-ROC cae a medida que aumenta el porcentaje de datos faltantes. Por ende, el mayor AUC-ROC que se alcanza es el obtenido para el árbol optimizado, el entrenado sin valores faltantes y entrenado con los siguientes valores de hiperparámetros:
 
 maxdepth (Máxima profundiad del árbol) = 20
 minsplit (Cant. mínima de observaciones para hacer un corte) = 1
 minbucket (Cant. mínima de observaciones en una hoja) = 10
 
+## 8. Conclusiones y discusión
 
+El análisis realizado mediante un árbol de decisión para la aprobación de préstamos permitió identificar los factores clave que influyen en la clasificación de las solicitudes de los mismos. Se observó que ciertas variables, como el default previo y la relación de ingresos de la persona con el monto pedido, tienen un impacto significativo en la decisión del modelo. La precisión obtenida en el conjunto de prueba fue adecuada, lo que sugiere que el modelo logra capturar patrones relevantes en los datos. 
 
+Se detectó la posible presencia de overfitting en árbol optimizado, pero esto no necesariamente podria ser un problema ya que el árbol predice mejor para el conjunto de test, en comparacion que el arbol base.
 
+El arbol de decisión demostró ser una herramienta útil para este problema debido a su capacidad de interpretar fácilmente los criterios utilizados para la clasificación. Su estructura permite visualizar de manera clara cómo se toman las decisiones y qué variables son más influyentes. No obstante, el modelo es sensible a la variabilidad en los datos y puede generar árboles demasiado complejos que reducen su capacidad de generalización.
+
+Sugerencias de mejoras y direcciones futuras:
+
+- Optimización del árbol: Implementar estrategias como la poda del árbol o el ajuste de hiperparámetros para reducir el sobreajuste.
+
+- Ingeniería de características: Explorar nuevas combinaciones de variables y realizar transformaciones que puedan mejorar la discriminación entre clases.
+
+- Comparación con otros modelos: Probar modelos adicionales como regresión logística  para determinar cuál ofrece mejores resultados en términos de precisión y capacidad de generalización.
