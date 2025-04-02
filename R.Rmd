@@ -3,8 +3,8 @@ title: "TP1 TD VI"
 author: "Dafydd Jenkins, Josefina Jahde y Serena Marelli"
 date: "2025-03-20"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -25,6 +25,7 @@ Consideramos que las variables principalmente influyentes a la hora de predecir 
 - Previous Loan Defaults on File: debería resultar relevante saber si el solicitante ya ha fallado en pagar deudas de préstamos en el pasado.
 
 ## Preparación de los datos
+
 Comenzamos cargando los datos desde el archivo csv accesible desde Kaggle.
 ```{r , echo=TRUE}
 
@@ -157,7 +158,7 @@ Observaciones:
 
 ## 3. Construcción de un árbol de decisión básico
 
-```{r , echo=FALSE}
+```{r , echo=TRUE}
 # Separación de los datos en conjuntos de training, validation y test
 set.seed(678)
 n <- nrow(datos)
@@ -181,7 +182,7 @@ library(rpart)
 library(rpart.plot)
 ```
 
-```{r , echo=FALSE}
+```{r , echo=TRUE}
 # Entrenamiento de un arbol base con hiperparámetros por defecto
 base_tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
               data = train, 
@@ -206,10 +207,10 @@ En total, el árbol tiene 5 niveles.
 
 ## 4. Evaluación del árbol de decisión básico
 
-```{r , echo=FALSE}
+```{r , echo=TRUE}
 # Predicciones sobre el conjunto de testeo
-base_predictions_class  <- predict(base_tree, newdata = test, type = "class") #clases predichas
-base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob") #probabilidades predichas
+base_predictions_class  <- predict(base_tree, newdata = test, type = "class") # clases predichas
+base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob") # probabilidades predichas
 ```
 
 ```{r , echo=FALSE}
@@ -217,39 +218,34 @@ base_predictions_prob  <- predict(base_tree, newdata = test, type = "prob") #pro
 ```
 
 ```{r , echo=FALSE}
-#Accuracy
+# Accuracy
 library(MLmetrics)
 base_accuracy <- Accuracy(base_predictions_class, test$loan_status)
 ```
 
 ```{r , echo=FALSE}
-#Matriz de confusión
+# Matriz de confusión
 base_conf_matrix <- ConfusionMatrix(base_predictions_class, test$loan_status)
-base_conf_matrix
 ```
 
 ```{r , echo=FALSE}
-#AUC
+# AUC-ROC
 base_AUC <- AUC(base_predictions_class, test$loan_status)
-base_AUC
 ```
 
 ```{r , echo=FALSE}
-#F1 Score
+# F1 Score
 base_f1_score <- F1_Score(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
-base_f1_score
 ```
 
 ```{r , echo=FALSE}
-#Precision
+# Precision
 base_precision <- Precision(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
-base_precision
 ```
 
 ```{r , echo=FALSE}
-#Recall
+# Recall
 base_recall <- Recall(base_predictions_class, test$loan_status, positive='1') # PREGUNTARRRR
-base_recall
 ```
 
 - Accuracy: Esta metrica nos dio como resultado  0.9117168, lo que significa que el modelo clasifica correctamente el 91.17% de los casos en el conjunto de test
@@ -275,8 +271,9 @@ Para experimentar con distintas combinaciones de maxdepth, minsplit y minbucket,
 
 También implementamos la función train_tree_with_hyperparameters, que dado un conjunto de entrenamiento y valores de maxdepth, minsplit y minbucket, entrena y retorna un árbol con esos valores de hiperparámetros.
 
-```{r , echo=FALSE}
+```{r , echo=TRUE}
 # Funciones auxiliares
+
 train_tree_with_hyperparameters <- function(train_data, max_depth, min_split, min_bucket){
   tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
                 data = train_data, 
@@ -321,12 +318,12 @@ gridSearch <- function(df_train, df_valid, maxdepth_hasta, minsplit_hasta, minbu
 Realizamos un Grid Search usando el conjunto de validación para ir midiendo el AUC y encontrar el que mejor responde. Los valores máximos de maxdepth, minsplit y minbucket que usamos en la búsqueda fueron un poco mayores que los que el árbol usa por default, tratando de que haya un buen balance entre la exhaustividad de la búsqueda y el tiempo de cómputo.
 ```{r , echo=FALSE}
 # 
-#resultados <- gridSearch(train,valid,25,35,10)
-mejor_auc <- resultados[1] #mejor auc obtenido
-mejor_maxd <- resultados[2] #maxdepth del mejor arbol
-mejor_mins <- resultados[3] #minsplit del mejor arbol
-mejor_minb <- resultados[4] #minbucket del mejor arbol
-aucs_calculados <- resultados[5:length(resultados)] #aucs computados en la búsqueda en orden
+resultados <- gridSearch(train,valid,25,35,10)
+mejor_auc <- resultados[1] # mejor auc obtenido
+mejor_maxd <- resultados[2] # maxdepth del mejor arbol
+mejor_mins <- resultados[3] # minsplit del mejor arbol
+mejor_minb <- resultados[4] # minbucket del mejor arbol
+aucs_calculados <- resultados[5:length(resultados)] # aucs computados en la búsqueda en orden
 ```
 Realizada la grid search, graficamos la relación de cada una de los hiperparámetros con el AUC del árbol.
 ```{r , echo=FALSE}
@@ -395,7 +392,7 @@ Con estas visualizaciones se puede ver los distintos valores que toma el AUC par
 Observamos que pareciera que el rendimiento (medido con el AUC) del árbol pareciera estar influenciado solamente por el maxdepth. Para minsplit y minbucket, en sus gráficos apreciamos que para cada valor posible de estos parámetros, la distribución de los puntos es idéntica, lo cual no pasa con maxdepth.
 
 Luego entrenamos un arbol con los parámetros que encontramos que optimizan el AUC del arbol (maxdepth = 20, minsplit = 1 y minbucket = 10) y predecimos sobre el conjunto de test.
-```{r , echo=FALSE}
+```{r , echo=TRUE}
 # Entrenamos el arbol con mejor AUC
 best_tree <- train_tree_with_hyperparameters(train, mejor_maxd, mejor_mins, mejor_minb)
 
@@ -413,6 +410,7 @@ Se presenta el arbol final optimizado (hiperparámetros y visualización).
 best_tree$control
 rpart.plot(best_tree, roundint = FALSE)
 ```
+
 Observamos que el árbol optimizado es mucho más profundo y con más nodos finales, lo cuál puede significar que hay overfitting con respecto al árbol entrenado en el ejercicio 3. 
 Sin embargo, como vimos en el ejercicio 5, el AUC sobre el conjunto de test también es mayor que el del árbol base, por lo cuál la mayor flexibilidad del árbol no necesariamente tendría que ser un problema, el árbol predice mejor para el conjunto de test.
 
@@ -442,9 +440,9 @@ Como vemos, si hay cambios en los valores numéricos de la importancia de cada v
 
 ## 7. Análisis del impacto de los valores faltantes
 
-Primero, creamoas 3 datasets nuevos, copias del original, asiganando la cantidad de missings por columna pedida en cada uno. Cabe recalcar que las observaciones que pertenecen a cada versión del conjunto de entrenamiento,
-validación y testeo, son las mismas.
-```{r , echo=FALSE}
+Primero, creamoas 3 datasets nuevos, copias del original, asiganando la cantidad de missings por columna pedida en cada uno. Cabe recalcar que las observaciones que pertenecen a cada versión del conjunto de entrenamiento, validación y testeo, son las mismas.
+
+```{r , echo=TRUE}
 datos_20 <- datos # 20% missings
 datos_50 <- datos # 50% missings
 datos_75 <- datos # 75% missings
@@ -510,7 +508,7 @@ train_50 <- datos_50[train_idx, ]
 valid_50 <- datos_50[valid_idx, ]
 test_50 <- datos_50[test_idx, ]
 
-#mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
+mejor_arbol_50 <- gridSearch(train_50,valid_50,25,35,10)
 mejor_auc_50 = mejor_arbol_50[1]
 mejor_maxd_50 = mejor_arbol_50[2]
 mejor_mins_50 = mejor_arbol_50[3]
@@ -532,7 +530,7 @@ train_75 <- datos_75[train_idx, ]
 valid_75 <- datos_75[valid_idx, ]
 test_75 <- datos_75[test_idx, ]
 
-# mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
+mejor_arbol_75 <- gridSearch(train_75,valid_75,25,35,10)
 mejor_auc_75 = mejor_arbol_75[1]
 mejor_maxd_75 = mejor_arbol_75[2]
 mejor_mins_75 = mejor_arbol_75[3]
@@ -580,4 +578,4 @@ Sugerencias de mejoras y direcciones futuras:
 
 - Ingeniería de características: Explorar nuevas combinaciones de variables y realizar transformaciones que puedan mejorar la discriminación entre clases.
 
-- Comparación con otros modelos: Probar modelos adicionales como regresión logística  para determinar cuál ofrece mejores resultados en términos de precisión y capacidad de generalización.
+- Comparación con otros modelos: Probar modelos adicionales como regresión logística  para determinar cuál ofrece mejores resultados en términos de precisión y capacidad de generalización.
